@@ -1,0 +1,23 @@
+import 'package:flutter/material.dart';
+
+const Color scaffoldColor = Color(0XFFF8F9FD);
+const Color whiteColor = Color(0XFFFFFFFF);
+const Color splashColor = Color(0XFF1777FF);
+const Color shadowColor = Color.fromARGB(255, 199, 199, 199);
+const Color greyColor = Color(0XFF999999);
+const Color hintTextColor = Color.fromARGB(255, 206, 206, 206);
+const Color lightGreyColor = Color.fromARGB(255, 239, 241, 255);
+const Color darkGreyColor = Color.fromARGB(255, 112, 108, 108);
+const Color blueColor = Color(0XFF2A62FF);
+const Color darkBlueColor = Color.fromARGB(255, 1, 18, 65);
+const Color lightBlueTextColor = Color.fromARGB(255, 111, 150, 255);
+const Color buttonLightBlueColorr = Color.fromARGB(255, 221, 230, 255);
+const Color lightBlueColor = Color.fromARGB(255, 187, 205, 255);
+const Color blackColor = Colors.black;
+const Color redColor = Colors.red;
+const Color buttonLightGreenColor = Color.fromARGB(255, 202, 255, 204);
+const Color lightGreenTextColor = Color.fromARGB(255, 58, 204, 63);
+const Color buttonLightOrangeColor = Color.fromARGB(255, 255, 229, 190);
+const Color lightOrangeTextColor = Color.fromARGB(255, 255, 177, 60);
+const Color filterTextColor = Colors.white;
+const Color previewBgColor = Color.fromARGB(255, 248, 251, 255);
