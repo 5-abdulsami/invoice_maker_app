@@ -1,30 +1,74 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:invoicemaker/core/enums/currency.dart';
+import 'package:invoicemaker/core/enums/invoice_status.dart';
+import 'package:invoicemaker/data/models/invoice.dart';
+import 'package:invoicemaker/presentation/common/widgets/status_badge.dart';
+import 'package:invoicemaker/presentation/invoice/widgets/invoice_card.dart';
 
-import 'package:invoicemaker/main.dart';
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('StatusBadge', () {
+    testWidgets('shows the status label', (tester) async {
+      await tester.pumpWidget(
+        _wrap(const StatusBadge(status: InvoiceStatus.partiallyPaid)),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(find.text('Partially Paid'), findsOneWidget);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    testWidgets('reports taps', (tester) async {
+      var taps = 0;
+      await tester.pumpWidget(
+        _wrap(
+          StatusBadge(
+            status: InvoiceStatus.unpaid,
+            onTap: () => taps++,
+          ),
+        ),
+      );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      await tester.tap(find.byType(StatusBadge));
+      expect(taps, 1);
+    });
+  });
+
+  group('InvoiceCard', () {
+    testWidgets('renders the number, client and formatted total',
+        (tester) async {
+      final invoice = Invoice.blank(invoiceNumber: 'INV00007').copyWith(
+        to: 'Globex',
+        total: 1250,
+        currency: Currency.usd,
+      );
+
+      await tester.pumpWidget(
+        _wrap(InvoiceCard(invoice: invoice, onTap: () {})),
+      );
+
+      expect(find.text('INV00007'), findsOneWidget);
+      expect(find.text('Globex'), findsOneWidget);
+      expect(find.text(r'$1250'), findsOneWidget);
+    });
+
+    testWidgets('lays out at 320 logical pixels without overflowing',
+        (tester) async {
+      tester.view
+        ..physicalSize = const Size(320, 640)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final invoice = Invoice.blank(invoiceNumber: 'INV00008').copyWith(
+        to: 'A client with a rather long company name',
+        total: 999999,
+      );
+
+      await tester.pumpWidget(
+        _wrap(InvoiceCard(invoice: invoice, onTap: () {})),
+      );
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }
