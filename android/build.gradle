@@ -5,14 +5,29 @@ allprojects {
     }
 }
 
-rootProject.buildDir = "../build"
+def newBuildDir = rootProject.layout.buildDirectory.dir("../../build").get()
+rootProject.layout.buildDirectory.value(newBuildDir)
 subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+    project.layout.buildDirectory.value(newBuildDir.dir(project.name))
 }
+// Older plugins miss a namespace or target an old compileSdk, which AGP 8+/9
+// rejects. Fall back to their group and lift compileSdk to at least 36.
+// Must be registered before evaluationDependsOn below, which forces evaluation.
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android") && project.android.namespace == null) {
+            project.android.namespace = project.group.toString()
+        }
+        if (project.hasProperty("android") && (project.android.compileSdk ?: 0) < 36) {
+            project.android.compileSdk = 36
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }

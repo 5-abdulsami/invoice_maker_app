@@ -55,7 +55,7 @@ class ItemsSectionCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: items.length,
-              onReorderItem: onReorder,
+              onReorder: onReorder,
               itemBuilder: (context, index) => Padding(
                 key: ValueKey(items[index].id),
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
