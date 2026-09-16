@@ -23,6 +23,19 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
 
+// Upload-key details for Play Store builds. Create android/key.properties with
+// storeFile, storePassword, keyAlias and keyPassword to sign a release build;
+// without it, release builds fall back to the debug key so `flutter run
+// --release` keeps working locally. key.properties must stay out of git.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+def hasUploadKey = keystorePropertiesFile.exists()
+if (hasUploadKey) {
+    keystorePropertiesFile.withReader("UTF-8") { reader ->
+        keystoreProperties.load(reader)
+    }
+}
+
 android {
     namespace = "com.tenbucks.invoicemaker"
     compileSdk = flutter.compileSdkVersion
@@ -34,21 +47,27 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.tenbucks.invoicemaker"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
 
+    signingConfigs {
+        release {
+            if (hasUploadKey) {
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig = hasUploadKey ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:invoicemaker/app.dart';
-import 'package:invoicemaker/core/constants/app_colors.dart';
+import 'package:invoicemaker/data/repositories/app_repositories.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set once at startup rather than on every build.
+  // The system bars follow the app's own light and dark themes.
   SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(statusBarColor: AppColors.primary),
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+    ),
   );
 
-  runApp(const InvoiceMakerApp());
+  // Storage is opened and read before the first frame, so no screen has to
+  // handle a loading state for data that is already on the device.
+  final repositories = await AppRepositories.initialize();
+
+  runApp(InvoiceMakerApp(repositories: repositories));
 }

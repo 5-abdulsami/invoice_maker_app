@@ -1,132 +1,236 @@
 import 'package:flutter/material.dart';
-import 'package:invoicemaker/core/constants/app_colors.dart';
-import 'package:invoicemaker/core/constants/app_spacing.dart';
+import 'package:invoicemaker/core/design/tokens.dart';
+import 'package:invoicemaker/core/extensions/build_context_ext.dart';
 
-/// Visual weight of an [AppButton].
-enum AppButtonVariant {
-  /// Filled blue — the primary action on a screen.
+/// How much weight a button carries.
+enum AppButtonStyle {
+  /// The one main action on a screen.
   primary,
 
-  /// Filled light blue — a secondary but still filled action.
+  /// A secondary action, outlined.
   secondary,
 
-  /// White with a grey border — cancel-style actions.
-  outline,
+  /// A low-emphasis action with no container.
+  quiet,
+
+  /// A destructive action.
+  danger,
 }
 
-/// The app's button, replacing the separate save, preview and share buttons.
+/// The app's button.
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.label,
     required this.onPressed,
-    this.variant = AppButtonVariant.primary,
+    this.style = AppButtonStyle.primary,
     this.icon,
     this.isBusy = false,
+    this.expand = true,
   });
+
+  const AppButton.secondary({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.isBusy = false,
+    this.expand = true,
+  }) : style = AppButtonStyle.secondary;
+
+  const AppButton.quiet({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.isBusy = false,
+    this.expand = false,
+  }) : style = AppButtonStyle.quiet;
+
+  const AppButton.danger({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon,
+    this.isBusy = false,
+    this.expand = true,
+  }) : style = AppButtonStyle.danger;
 
   final String label;
 
   /// Null disables the button.
   final VoidCallback? onPressed;
-  final AppButtonVariant variant;
+
+  final AppButtonStyle style;
   final IconData? icon;
 
-  /// Shows a spinner and blocks taps while an action runs.
+  /// Shows a spinner in place of the label and blocks taps.
   final bool isBusy;
 
-  static const double _height = 48;
+  /// Whether the button fills the width it is given.
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final effectiveOnPressed = isBusy ? null : onPressed;
+
     final child = isBusy
-        ? const SizedBox.square(
-            dimension: 20,
-            child: CircularProgressIndicator(strokeWidth: 2),
+        ? SizedBox.square(
+            dimension: IconSizes.sm,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: style == AppButtonStyle.primary
+                  ? palette.onPrimary
+                  : palette.primary,
+            ),
           )
-        : Text(label, textAlign: TextAlign.center);
+        : Text(label, maxLines: 1, overflow: TextOverflow.ellipsis);
 
-    final style = ButtonStyle(
-      minimumSize: const WidgetStatePropertyAll(Size.fromHeight(_height)),
-      shape: WidgetStatePropertyAll(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radius),
+    final button = switch (style) {
+      AppButtonStyle.primary => FilledButton(
+          onPressed: effectiveOnPressed,
+          child: _withIcon(child),
         ),
-      ),
-    );
-
-    final onTap = isBusy ? null : onPressed;
-
-    return switch (variant) {
-      AppButtonVariant.primary => FilledButton.icon(
-          onPressed: onTap,
-          style: style.merge(
-            const ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(AppColors.primary),
-              foregroundColor: WidgetStatePropertyAll(AppColors.white),
-            ),
-          ),
-          icon: icon == null ? null : Icon(icon),
-          label: child,
+      AppButtonStyle.secondary => OutlinedButton(
+          onPressed: effectiveOnPressed,
+          child: _withIcon(child),
         ),
-      AppButtonVariant.secondary => FilledButton.icon(
-          onPressed: onTap,
-          style: style.merge(
-            const ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(AppColors.buttonLightBlue),
-              foregroundColor: WidgetStatePropertyAll(AppColors.primary),
-            ),
-          ),
-          icon: icon == null ? null : Icon(icon),
-          label: child,
+      AppButtonStyle.quiet => TextButton(
+          onPressed: effectiveOnPressed,
+          child: _withIcon(child),
         ),
-      AppButtonVariant.outline => OutlinedButton.icon(
-          onPressed: onTap,
-          style: style.merge(
-            const ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(AppColors.white),
-              foregroundColor: WidgetStatePropertyAll(AppColors.darkGrey),
-              side: WidgetStatePropertyAll(
-                BorderSide(color: AppColors.darkGrey),
-              ),
-            ),
+      AppButtonStyle.danger => FilledButton(
+          onPressed: effectiveOnPressed,
+          style: FilledButton.styleFrom(
+            backgroundColor: palette.danger,
+            foregroundColor: palette.onPrimary,
           ),
-          icon: icon == null ? null : Icon(icon),
-          label: child,
+          child: _withIcon(child),
         ),
     };
+
+    return expand ? SizedBox(width: double.infinity, child: button) : button;
+  }
+
+  Widget _withIcon(Widget child) {
+    if (icon == null || isBusy) return child;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: IconSizes.sm),
+        Gap.w8,
+        Flexible(child: child),
+      ],
+    );
   }
 }
 
-/// The sticky bar at the bottom of the invoice and estimate forms.
-class BottomActionBar extends StatelessWidget {
-  const BottomActionBar({super.key, required this.children});
+/// A large tappable call to action, used for the home screen's main button.
+class AppHeroButton extends StatelessWidget {
+  const AppHeroButton({
+    super.key,
+    required this.label,
+    required this.description,
+    required this.icon,
+    required this.onPressed,
+  });
 
-  final List<Widget> children;
+  final String label;
+  final String description;
+  final IconData icon;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 1,
-            offset: Offset(0, -0.75),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            for (var i = 0; i < children.length; i++) ...[
-              if (i > 0) Gap.wMd,
-              Expanded(flex: i == children.length - 1 ? 2 : 1, child: children[i]),
+    final palette = context.palette;
+
+    return Material(
+      color: palette.primary,
+      borderRadius: Radii.mdAll,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.all(Insets.lg),
+          child: Row(
+            children: [
+              Icon(icon, color: palette.onPrimary, size: IconSizes.lg),
+              Gap.w16,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: context.text.titleLarge?.copyWith(
+                        color: palette.onPrimary,
+                      ),
+                    ),
+                    Gap.h2,
+                    Text(
+                      description,
+                      style: context.text.bodyMedium?.copyWith(
+                        color: palette.onPrimary.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
-          ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A compact icon-and-label action, used in a row under a document preview.
+class AppIconAction extends StatelessWidget {
+  const AppIconAction({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.isDestructive = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final bool isDestructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final color = isDestructive ? palette.danger : palette.textPrimary;
+
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: Radii.smAll,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Insets.sm,
+            vertical: Insets.sm,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: IconSizes.md, color: color),
+              Gap.h4,
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.text.labelMedium?.copyWith(color: color),
+              ),
+            ],
+          ),
         ),
       ),
     );

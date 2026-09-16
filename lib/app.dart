@@ -1,43 +1,94 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
-import 'package:invoicemaker/core/theme/app_theme.dart';
-import 'package:invoicemaker/navigation/app_router.dart';
-import 'package:invoicemaker/navigation/route_names.dart';
-import 'package:invoicemaker/providers/business_provider.dart';
-import 'package:invoicemaker/providers/client_provider.dart';
-import 'package:invoicemaker/providers/estimate_provider.dart';
-import 'package:invoicemaker/providers/invoice_provider.dart';
-import 'package:invoicemaker/providers/item_provider.dart';
-import 'package:invoicemaker/providers/navigation_provider.dart';
-import 'package:invoicemaker/providers/payment_method_provider.dart';
-import 'package:invoicemaker/providers/settings_provider.dart';
-import 'package:invoicemaker/providers/signature_provider.dart';
+import 'package:invoicemaker/core/design/app_theme.dart';
+import 'package:invoicemaker/core/design/tokens.dart';
+import 'package:invoicemaker/data/repositories/app_repositories.dart';
+import 'package:invoicemaker/domain/entitlements.dart';
+import 'package:invoicemaker/presentation/shell/app_shell.dart';
+import 'package:invoicemaker/services/backup_service.dart';
+import 'package:invoicemaker/services/pdf/document_pdf_service.dart';
+import 'package:invoicemaker/state/business_controller.dart';
+import 'package:invoicemaker/state/catalog_controller.dart';
+import 'package:invoicemaker/state/customer_controller.dart';
+import 'package:invoicemaker/state/document_controller.dart';
+import 'package:invoicemaker/state/settings_controller.dart';
 import 'package:provider/provider.dart';
 
-/// The app shell: state wiring, theme and routing.
+/// The app shell: dependency wiring, theme and the first screen.
 class InvoiceMakerApp extends StatelessWidget {
-  const InvoiceMakerApp({super.key});
+  const InvoiceMakerApp({super.key, required this.repositories});
+
+  /// Storage, already opened and loaded before the first frame.
+  final AppRepositories repositories;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => NavigationProvider()),
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => SignatureProvider()),
-        ChangeNotifierProvider(create: (_) => InvoiceProvider()),
-        ChangeNotifierProvider(create: (_) => EstimateProvider()),
-        ChangeNotifierProvider(create: (_) => BusinessProvider()),
-        ChangeNotifierProvider(create: (_) => ClientProvider()),
-        ChangeNotifierProvider(create: (_) => ItemProvider()),
-        ChangeNotifierProvider(create: (_) => PaymentMethodProvider()),
+        Provider<AppRepositories>.value(value: repositories),
+        Provider<Entitlements>(
+          create: (_) => const EarlyAccessEntitlements(),
+        ),
+        Provider<BackupService>(
+          create: (_) => BackupService(repositories),
+        ),
+        Provider<DocumentPdfService>(
+          create: (_) => DocumentPdfService(vault: repositories.vault),
+        ),
+        ChangeNotifierProvider<SettingsController>(
+          create: (_) => SettingsController(repositories.settings),
+        ),
+        ChangeNotifierProvider<BusinessController>(
+          create: (_) {
+            final controller = BusinessController(repositories.business);
+            // The profile itself is already loaded; its images are read in
+            // the background so the first frame is not held up by disk.
+            unawaited(controller.loadImages());
+            return controller;
+          },
+        ),
+        ChangeNotifierProvider<CustomerController>(
+          create: (_) => CustomerController(repositories.customers),
+        ),
+        ChangeNotifierProvider<CatalogController>(
+          create: (_) => CatalogController(repositories.catalog),
+        ),
+        // Depends on the settings controller for numbering, so it is created
+        // after it and reads it rather than the repository directly.
+        ChangeNotifierProxyProvider<SettingsController, DocumentController>(
+          create: (context) => DocumentController(
+            documents: repositories.documents,
+            business: repositories.business,
+            settings: context.read<SettingsController>(),
+          ),
+          update: (_, __, controller) => controller!,
+        ),
       ],
-      child: MaterialApp(
-        title: AppStrings.appName,
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        initialRoute: RouteNames.splash,
-        onGenerateRoute: AppRouter.generateRoute,
+      child: Consumer<SettingsController>(
+        builder: (context, settings, _) {
+          return MaterialApp(
+            title: AppStrings.appName,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: settings.themeMode,
+            home: const AppShell(),
+            builder: (context, child) {
+              // Very large system text sizes would clip fixed-height rows, so
+              // the scale is capped while still honouring the user's choice.
+              final scaler = MediaQuery.textScalerOf(context).clamp(
+                maxScaleFactor: Layout.maxTextScale,
+              );
+
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaler: scaler),
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
+          );
+        },
       ),
     );
   }
