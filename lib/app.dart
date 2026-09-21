@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
+import 'package:invoicemaker/core/design/app_scroll_behavior.dart';
 import 'package:invoicemaker/core/design/app_theme.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
 import 'package:invoicemaker/data/repositories/app_repositories.dart';
@@ -74,6 +75,7 @@ class InvoiceMakerApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: settings.themeMode,
+            scrollBehavior: const AppScrollBehavior(),
             home: const AppShell(),
             builder: (context, child) {
               // Very large system text sizes would clip fixed-height rows, so
