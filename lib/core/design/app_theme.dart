@@ -35,7 +35,7 @@ sealed class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleSpacing: Insets.xs,
+        titleSpacing: Insets.gutter,
         shape: Border(
           bottom: BorderSide(color: palette.border),
         ),
