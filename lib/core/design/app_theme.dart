@@ -353,8 +353,10 @@ sealed class AppTheme {
 
   static ButtonStyle _buttonStyle(TextTheme textTheme) {
     return ButtonStyle(
+      // Finite width: an infinite minimum width crashes any button laid out
+      // in a Row, app bar, or dialog. Full-width buttons use AppButton.expand.
       minimumSize: const WidgetStatePropertyAll(
-        Size.fromHeight(Layout.minTapTarget),
+        Size(Layout.minTapTarget, Layout.minTapTarget),
       ),
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: Insets.lg),
