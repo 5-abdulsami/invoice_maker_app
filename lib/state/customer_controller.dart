@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:invoicemaker/data/models/customer.dart';
 import 'package:invoicemaker/data/repositories/customer_repository.dart';
+import 'package:invoicemaker/state/optimistic_notifier.dart';
 
 /// Exposes the saved customers.
-class CustomerController extends ChangeNotifier {
+class CustomerController extends ChangeNotifier with OptimisticNotifier {
   CustomerController(this._repository);
 
   final CustomerRepository _repository;
@@ -19,10 +20,7 @@ class CustomerController extends ChangeNotifier {
   /// Customers matching [query], or all of them when it is blank.
   List<Customer> search(String query) => _repository.search(query);
 
-  Future<void> save(Customer customer) async {
-    await _repository.save(customer);
-    notifyListeners();
-  }
+  Future<void> save(Customer customer) => commit(_repository.save(customer));
 
   /// Creates and saves a customer, returning the stored record.
   Future<Customer> create({
@@ -45,10 +43,7 @@ class CustomerController extends ChangeNotifier {
     return customer;
   }
 
-  Future<void> delete(String id) async {
-    await _repository.delete(id);
-    notifyListeners();
-  }
+  Future<void> delete(String id) => commit(_repository.delete(id));
 
   void refresh() => notifyListeners();
 }

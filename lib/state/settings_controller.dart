@@ -6,9 +6,10 @@ import 'package:invoicemaker/core/enums/invoice_template.dart';
 import 'package:invoicemaker/core/utils/money.dart';
 import 'package:invoicemaker/data/models/app_settings.dart';
 import 'package:invoicemaker/data/repositories/settings_repository.dart';
+import 'package:invoicemaker/state/optimistic_notifier.dart';
 
 /// Exposes the user's preferences and persists every change.
-class SettingsController extends ChangeNotifier {
+class SettingsController extends ChangeNotifier with OptimisticNotifier {
   SettingsController(this._repository);
 
   final SettingsRepository _repository;
@@ -48,7 +49,10 @@ class SettingsController extends ChangeNotifier {
   Future<void> setNumberGrouping(NumberGroupingOption option) =>
       _update(settings.copyWith(numberGrouping: option));
 
-  Future<void> setDefaultTax({required String label, required double percent}) =>
+  Future<void> setDefaultTax({
+    required String label,
+    required double percent,
+  }) =>
       _update(
         settings.copyWith(defaultTaxLabel: label, defaultTaxPercent: percent),
       );
@@ -97,8 +101,6 @@ class SettingsController extends ChangeNotifier {
   /// Re-reads the repository after a restore replaced the stored settings.
   void refresh() => notifyListeners();
 
-  Future<void> _update(AppSettings updated) async {
-    await _repository.save(updated);
-    notifyListeners();
-  }
+  Future<void> _update(AppSettings updated) =>
+      commit(_repository.save(updated));
 }

@@ -8,9 +8,11 @@ import 'package:invoicemaker/core/design/typography.dart';
 /// Every colour, radius and spacing value a widget needs is reachable from the
 /// theme, so widgets never declare their own.
 sealed class AppTheme {
-  static ThemeData get light => _build(AppPalette.light);
+  // Built once: a theme is costly to construct, and a fresh instance on every
+  // app rebuild would also re-theme every screen for no visible change.
+  static final ThemeData light = _build(AppPalette.light);
 
-  static ThemeData get dark => _build(AppPalette.dark);
+  static final ThemeData dark = _build(AppPalette.dark);
 
   static ThemeData _build(AppPalette palette) {
     final textTheme = AppTypography.textTheme(palette);

@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:invoicemaker/data/models/business_profile.dart';
 import 'package:invoicemaker/data/repositories/business_repository.dart';
+import 'package:invoicemaker/state/optimistic_notifier.dart';
 
 /// Exposes the user's business profile, including the logo and signature
 /// bytes the UI and the PDF both need.
-class BusinessController extends ChangeNotifier {
+class BusinessController extends ChangeNotifier with OptimisticNotifier {
   BusinessController(this._repository);
 
   final BusinessRepository _repository;
@@ -30,10 +31,8 @@ class BusinessController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> save(BusinessProfile profile) async {
-    await _repository.save(profile);
-    notifyListeners();
-  }
+  Future<void> save(BusinessProfile profile) =>
+      commit(_repository.save(profile));
 
   /// Copies the picked image in as the logo.
   Future<void> setLogo(String sourcePath) async {
@@ -42,10 +41,9 @@ class BusinessController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeLogo() async {
-    await _repository.clearLogo();
+  Future<void> removeLogo() {
     _logoBytes = null;
-    notifyListeners();
+    return commit(_repository.clearLogo());
   }
 
   Future<void> setSignature(Uint8List bytes) async {
@@ -54,10 +52,9 @@ class BusinessController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeSignature() async {
-    await _repository.clearSignature();
+  Future<void> removeSignature() {
     _signatureBytes = null;
-    notifyListeners();
+    return commit(_repository.clearSignature());
   }
 
   /// Re-reads everything after a restore or a wipe.

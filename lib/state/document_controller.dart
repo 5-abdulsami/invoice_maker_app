@@ -6,6 +6,7 @@ import 'package:invoicemaker/data/models/sales_document.dart';
 import 'package:invoicemaker/data/repositories/business_repository.dart';
 import 'package:invoicemaker/data/repositories/document_repository.dart';
 import 'package:invoicemaker/domain/numbering.dart';
+import 'package:invoicemaker/state/optimistic_notifier.dart';
 import 'package:invoicemaker/state/settings_controller.dart';
 
 /// Totals shown on the home screen.
@@ -47,7 +48,7 @@ class DocumentSummary {
 }
 
 /// Owns the stored documents: reading, saving, numbering and status changes.
-class DocumentController extends ChangeNotifier {
+class DocumentController extends ChangeNotifier with OptimisticNotifier {
   DocumentController({
     required DocumentRepository documents,
     required BusinessRepository business,
@@ -147,16 +148,14 @@ class DocumentController extends ChangeNotifier {
 
   /// Saves [document] and advances the numbering sequence when its number
   /// came from the generator.
-  Future<void> save(SalesDocument document) async {
-    await _documents.save(document);
-    await _advanceSequenceIfGenerated(document);
-    notifyListeners();
-  }
+  Future<void> save(SalesDocument document) => commit(
+        Future.wait([
+          _documents.save(document),
+          _advanceSequenceIfGenerated(document),
+        ]),
+      );
 
-  Future<void> delete(String id) async {
-    await _documents.delete(id);
-    notifyListeners();
-  }
+  Future<void> delete(String id) => commit(_documents.delete(id));
 
   /// Saves a copy of [document] under a fresh number and returns it.
   Future<SalesDocument> duplicate(SalesDocument document) async {

@@ -67,14 +67,17 @@ class InvoiceMakerApp extends StatelessWidget {
           update: (_, __, controller) => controller!,
         ),
       ],
-      child: Consumer<SettingsController>(
-        builder: (context, settings, _) {
+      // Only the theme mode is read here, so changing any other setting does
+      // not rebuild the whole app.
+      child: Selector<SettingsController, ThemeMode>(
+        selector: (_, settings) => settings.themeMode,
+        builder: (context, themeMode, _) {
           return MaterialApp(
             title: AppStrings.appName,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
-            themeMode: settings.themeMode,
+            themeMode: themeMode,
             scrollBehavior: const AppScrollBehavior(),
             home: const AppShell(),
             builder: (context, child) {

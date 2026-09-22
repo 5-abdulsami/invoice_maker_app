@@ -50,6 +50,11 @@ abstract interface class LocalStore {
 ///   over the target, so a crash mid-write cannot leave a half-written file.
 /// * A damaged file does not lose the data. The previous good copy is kept
 ///   alongside as `.bak` and is used when the main file will not parse.
+///
+/// Writes to one key run one at a time, in order, and coalesce: while one is
+/// running, further values for that key replace each other and only the
+/// newest is written after it. Rapid changes, such as flicking through
+/// settings, therefore cost at most two writes and can never interleave.
 class FileLocalStore implements LocalStore {
   FileLocalStore({required Directory directory}) : _directory = directory;
 
@@ -73,6 +78,12 @@ class FileLocalStore implements LocalStore {
   static const String _tempExtension = '.tmp';
 
   final Directory _directory;
+
+  /// The last queued operation per key; each waits for the one before it.
+  final Map<String, Future<void>> _tails = {};
+
+  /// The newest value per key that is waiting to be written.
+  final Map<String, Object> _pending = {};
 
   @override
   Future<JsonMap?> readObject(String key) async {
@@ -100,9 +111,13 @@ class FileLocalStore implements LocalStore {
       _write(key, values);
 
   @override
-  Future<void> remove(String key) async {
-    await _deleteQuietly(_fileFor(key));
-    await _deleteQuietly(_backupFor(key));
+  Future<void> remove(String key) {
+    // A write still waiting would otherwise bring the removed data back.
+    _pending.remove(key);
+    return _enqueue(key, () async {
+      await _deleteQuietly(_fileFor(key));
+      await _deleteQuietly(_backupFor(key));
+    });
   }
 
   @override
@@ -134,16 +149,47 @@ class FileLocalStore implements LocalStore {
     }
   }
 
-  Future<void> _write(String key, Object value) async {
+  Future<void> _write(String key, Object value) {
+    final isWaiting = _pending.containsKey(key);
+    _pending[key] = value;
+
+    // A queued write has not started yet, so it will pick up this newer value.
+    if (isWaiting) return _tails[key]!;
+
+    return _enqueue(key, () async {
+      final latest = _pending.remove(key);
+      if (latest != null) await _writeFile(key, latest);
+    });
+  }
+
+  /// Runs [operation] after every operation already queued for [key].
+  Future<void> _enqueue(String key, Future<void> Function() operation) {
+    final previous = _tails[key] ?? Future<void>.value();
+
+    // An earlier failure was already reported to its own caller, so it must
+    // not stop the operations queued behind it.
+    final next = previous.catchError((Object _) {}).then((_) => operation());
+    _tails[key] = next;
+
+    next.whenComplete(() {
+      if (identical(_tails[key], next)) _tails.remove(key);
+    }).ignore();
+
+    return next;
+  }
+
+  Future<void> _writeFile(String key, Object value) async {
     final target = _fileFor(key);
     final temp = File('${target.path}$_tempExtension');
 
     try {
       await temp.writeAsString(jsonEncode(value), flush: true);
 
-      // Keep the last good copy before replacing it.
+      // Keep the last good copy before replacing it. A rename rather than a
+      // copy: it is instant whatever the file size, and if the app dies
+      // between the two renames, reads fall back to this copy.
       if (await target.exists()) {
-        await target.copy(_backupFor(key).path);
+        await target.rename(_backupFor(key).path);
       }
       await temp.rename(target.path);
     } on Object catch (error) {

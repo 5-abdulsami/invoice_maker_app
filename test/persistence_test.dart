@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:invoicemaker/core/enums/currency.dart';
 import 'package:invoicemaker/core/enums/document_kind.dart';
@@ -239,6 +241,43 @@ void main() {
       );
 
       expect(next.number, 'EST-0003');
+    });
+  });
+
+  group('file store writes', () {
+    late Directory directory;
+    late FileLocalStore store;
+
+    setUp(() async {
+      directory = await Directory.systemTemp.createTemp('store_test');
+      store = FileLocalStore(directory: directory);
+    });
+
+    tearDown(() => directory.delete(recursive: true));
+
+    test('rapid writes to one key keep the newest value', () async {
+      await Future.wait([
+        for (var i = 0; i < 20; i++) store.writeObject('key', {'value': i}),
+      ]);
+
+      expect(await store.readObject('key'), {'value': 19});
+    });
+
+    test('the previous value is kept as a backup', () async {
+      await store.writeObject('key', {'value': 1});
+      await store.writeObject('key', {'value': 2});
+
+      final backup = File('${directory.path}/key.json.bak');
+      expect(await backup.readAsString(), '{"value":1}');
+    });
+
+    test('a remove is not undone by a write queued before it', () async {
+      final write = store.writeObject('key', {'value': 1});
+      final pending = store.writeObject('key', {'value': 2});
+      await store.remove('key');
+      await Future.wait([write, pending]);
+
+      expect(await store.readObject('key'), isNull);
     });
   });
 }
