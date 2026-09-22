@@ -109,8 +109,6 @@ class _LineItemFormState extends State<_LineItemForm> {
         : _original!.taxPercent!.toStringAsFixed(0),
   );
 
-  final FocusNode _quantityFocus = FocusNode();
-
   bool _saveToCatalog = false;
   bool _showMoreOptions = false;
 
@@ -135,7 +133,6 @@ class _LineItemFormState extends State<_LineItemForm> {
     ]) {
       controller.dispose();
     }
-    _quantityFocus.dispose();
     super.dispose();
   }
 
@@ -209,7 +206,6 @@ class _LineItemFormState extends State<_LineItemForm> {
               hint: 'Design work, Coffee beans, Repair',
               validator: Validators.required,
               textInputAction: TextInputAction.next,
-              onSubmitted: (_) => _quantityFocus.requestFocus(),
             ),
             Gap.h16,
             Row(
@@ -219,7 +215,6 @@ class _LineItemFormState extends State<_LineItemForm> {
                   child: AppTextField.quantity(
                     controller: _quantityController,
                     label: AppStrings.quantity,
-                    focusNode: _quantityFocus,
                     onChanged: (_) => setState(() {}),
                     textInputAction: TextInputAction.next,
                   ),

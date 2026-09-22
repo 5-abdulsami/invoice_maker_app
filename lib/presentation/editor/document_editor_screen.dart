@@ -418,83 +418,79 @@ class _DocumentEditorScreenState extends State<DocumentEditorScreen>
             ),
             body: LoadingOverlay(
               isLoading: isBusy,
-              child: GestureDetector(
-                onTap: context.dismissKeyboard,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    Insets.gutter,
-                    Insets.lg,
-                    Insets.gutter,
-                    Insets.xl,
-                  ),
-                  children: [
-                    CardColumn(
-                      children: [
-                        EditorHeaderCard(
-                          editor: _editor,
-                          dateFormat: settings.dateFormat,
-                          numberController: _numberController,
-                          referenceController: _referenceController,
-                          onPickIssueDate: _pickIssueDate,
-                          onPickEndDate: _pickEndDate,
-                        ),
-                        EditorRecipientCard(
-                          editor: _editor,
-                          onChooseRecipient: _chooseRecipient,
-                          onClearRecipient: _editor.clearRecipient,
-                          onEditBusiness: _openBusinessProfile,
-                        ),
-                        EditorItemsCard(
-                          editor: _editor,
-                          money: money,
-                          onAddLine: _addLine,
-                          onEditLine: _editLine,
-                        ),
-                        EditorTotalsCard(
-                          editor: _editor,
-                          money: money,
-                          onEditDiscount: _editDiscount,
-                          onEditTax: _editTax,
-                          onEditShipping: _editShipping,
-                        ),
-                        EditorDetailsCard(
-                          editor: _editor,
-                          money: money,
-                          hasBusinessSignature:
-                              business.profile.hasSignature,
-                          onPickCurrency: _pickCurrency,
-                          onPickTemplate: _pickTemplate,
-                          onEditStatus: _editStatus,
-                          onEditNotes: () => _editTextBlock(
-                            title: AppStrings.notes,
-                            fieldLabel: AppStrings.notes,
-                            current: _editor.document.notes,
-                            hint: 'Thanks for your business',
-                            onSaved: _editor.setNotes,
-                          ),
-                          onEditPaymentTerms: () => _editTextBlock(
-                            title: AppStrings.paymentTerms,
-                            fieldLabel: AppStrings.paymentTerms,
-                            current: _editor.document.paymentTerms,
-                            hint: 'Payment due within 14 days',
-                            onSaved: _editor.setPaymentTerms,
-                          ),
-                          onEditPaymentDetails: () => _editTextBlock(
-                            title: AppStrings.paymentDetails,
-                            fieldLabel: AppStrings.paymentDetails,
-                            current: _editor.document.paymentDetails,
-                            hint: 'Bank name, account number, reference',
-                            onSaved: _editor.setPaymentDetails,
-                          ),
-                          onToggleSignature: (enabled) =>
-                              _editor.setSignaturePath(
-                            enabled ? business.profile.signaturePath : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  Insets.gutter,
+                  Insets.lg,
+                  Insets.gutter,
+                  Insets.xl,
                 ),
+                children: [
+                  CardColumn(
+                    children: [
+                      EditorHeaderCard(
+                        editor: _editor,
+                        dateFormat: settings.dateFormat,
+                        numberController: _numberController,
+                        referenceController: _referenceController,
+                        onPickIssueDate: _pickIssueDate,
+                        onPickEndDate: _pickEndDate,
+                      ),
+                      EditorRecipientCard(
+                        editor: _editor,
+                        onChooseRecipient: _chooseRecipient,
+                        onClearRecipient: _editor.clearRecipient,
+                        onEditBusiness: _openBusinessProfile,
+                      ),
+                      EditorItemsCard(
+                        editor: _editor,
+                        money: money,
+                        onAddLine: _addLine,
+                        onEditLine: _editLine,
+                      ),
+                      EditorTotalsCard(
+                        editor: _editor,
+                        money: money,
+                        onEditDiscount: _editDiscount,
+                        onEditTax: _editTax,
+                        onEditShipping: _editShipping,
+                      ),
+                      EditorDetailsCard(
+                        editor: _editor,
+                        money: money,
+                        hasBusinessSignature: business.profile.hasSignature,
+                        onPickCurrency: _pickCurrency,
+                        onPickTemplate: _pickTemplate,
+                        onEditStatus: _editStatus,
+                        onEditNotes: () => _editTextBlock(
+                          title: AppStrings.notes,
+                          fieldLabel: AppStrings.notes,
+                          current: _editor.document.notes,
+                          hint: 'Thanks for your business',
+                          onSaved: _editor.setNotes,
+                        ),
+                        onEditPaymentTerms: () => _editTextBlock(
+                          title: AppStrings.paymentTerms,
+                          fieldLabel: AppStrings.paymentTerms,
+                          current: _editor.document.paymentTerms,
+                          hint: 'Payment due within 14 days',
+                          onSaved: _editor.setPaymentTerms,
+                        ),
+                        onEditPaymentDetails: () => _editTextBlock(
+                          title: AppStrings.paymentDetails,
+                          fieldLabel: AppStrings.paymentDetails,
+                          current: _editor.document.paymentDetails,
+                          hint: 'Bank name, account number, reference',
+                          onSaved: _editor.setPaymentDetails,
+                        ),
+                        onToggleSignature: (enabled) =>
+                            _editor.setSignaturePath(
+                          enabled ? business.profile.signaturePath : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           );

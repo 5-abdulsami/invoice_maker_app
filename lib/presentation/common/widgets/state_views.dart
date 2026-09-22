@@ -7,22 +7,19 @@ import 'package:invoicemaker/presentation/common/widgets/app_button.dart';
 /// Shown where a list has nothing in it.
 ///
 /// An outlined glyph rather than an illustration: it scales to any width, has
-/// no asset to ship and reads the same in dark mode.
+/// no asset to ship and reads the same in dark mode. It carries no button:
+/// every list screen already offers creation through its action button.
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,
     required this.icon,
     required this.title,
     required this.message,
-    this.actionLabel,
-    this.onAction,
   });
 
   final IconData icon;
   final String title;
   final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -58,14 +55,6 @@ class AppEmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: context.text.bodyMedium,
             ),
-            if (actionLabel != null && onAction != null) ...[
-              Gap.h20,
-              AppButton(
-                label: actionLabel!,
-                onPressed: onAction,
-                expand: false,
-              ),
-            ],
           ],
         ),
       ),

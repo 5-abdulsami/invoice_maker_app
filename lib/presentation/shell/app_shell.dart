@@ -8,17 +8,26 @@ import 'package:invoicemaker/presentation/home/home_screen.dart';
 
 /// The destinations in the bottom bar.
 enum ShellTab {
-  home(AppStrings.home, Icons.home_outlined, Icons.home),
-  invoices(AppStrings.documents, Icons.receipt_long_outlined, Icons.receipt_long),
-  estimates('Estimates', Icons.description_outlined, Icons.description),
-  customers(AppStrings.customers, Icons.people_outline, Icons.people),
-  items(AppStrings.catalog, Icons.inventory_2_outlined, Icons.inventory_2);
+  home(Icons.home_outlined, Icons.home),
+  invoices(Icons.receipt_long_outlined, Icons.receipt_long),
+  estimates(Icons.description_outlined, Icons.description),
+  customers(Icons.people_outline, Icons.people),
+  items(Icons.inventory_2_outlined, Icons.inventory_2);
 
-  const ShellTab(this.label, this.icon, this.selectedIcon);
+  const ShellTab(this.icon, this.selectedIcon);
 
-  final String label;
   final IconData icon;
   final IconData selectedIcon;
+
+  /// Document tabs take their name from the kind, so each tab always matches
+  /// the title of the screen it opens.
+  String get label => switch (this) {
+        ShellTab.home => AppStrings.home,
+        ShellTab.invoices => DocumentKind.invoice.plural,
+        ShellTab.estimates => DocumentKind.estimate.plural,
+        ShellTab.customers => AppStrings.customers,
+        ShellTab.items => AppStrings.catalog,
+      };
 }
 
 /// Hosts the five main destinations.

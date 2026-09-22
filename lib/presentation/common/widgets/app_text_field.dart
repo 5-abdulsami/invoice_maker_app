@@ -218,7 +218,7 @@ class AppTextField extends StatelessWidget {
       // Releases focus and the keyboard when the user taps anything outside
       // this field. This is the field's own TapRegion hook, so it covers taps
       // on any widget, on blank space and on a scrolling list alike.
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      onTapOutside: (_) => context.dismissKeyboard(),
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
       validator: validator,
@@ -254,7 +254,11 @@ class AppTextField extends StatelessWidget {
 
     if (!selectAllOnFocus) return labelled;
 
+    // Only listens: without these flags the wrapper is a focus stop of its
+    // own, and the keyboard's Next would land on it and close the keyboard.
     return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
       onFocusChange: (hasFocus) {
         if (!hasFocus || controller.text.isEmpty) return;
         controller.selection = TextSelection(

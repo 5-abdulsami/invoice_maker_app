@@ -100,6 +100,9 @@ extension AppFeedbackContext on BuildContext {
       );
   }
 
-  /// Drops focus, dismissing the keyboard.
-  void dismissKeyboard() => FocusScope.of(this).unfocus();
+  /// Drops whatever holds focus, dismissing the keyboard.
+  ///
+  /// The one way the app releases focus: fields call it when tapped outside,
+  /// so no screen needs its own tap-to-dismiss wrapper.
+  void dismissKeyboard() => FocusManager.instance.primaryFocus?.unfocus();
 }

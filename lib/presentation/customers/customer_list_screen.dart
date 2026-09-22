@@ -105,12 +105,10 @@ class _CustomerListScreenState extends State<CustomerListScreen> {
       );
     }
 
-    return AppEmptyState(
+    return const AppEmptyState(
       icon: Icons.people_outline,
       title: AppCopy.noCustomersTitle,
       message: AppCopy.noCustomersBody,
-      actionLabel: AppStrings.newCustomer,
-      onAction: _open,
     );
   }
 }

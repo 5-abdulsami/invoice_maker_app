@@ -6,9 +6,7 @@ import 'package:invoicemaker/data/models/customer.dart';
 import 'package:invoicemaker/data/models/sales_document.dart';
 import 'package:invoicemaker/presentation/business/business_profile_screen.dart';
 import 'package:invoicemaker/presentation/catalog/catalog_editor_screen.dart';
-import 'package:invoicemaker/presentation/catalog/catalog_list_screen.dart';
 import 'package:invoicemaker/presentation/customers/customer_editor_screen.dart';
-import 'package:invoicemaker/presentation/customers/customer_list_screen.dart';
 import 'package:invoicemaker/presentation/documents/document_detail_screen.dart';
 import 'package:invoicemaker/presentation/documents/document_preview_screen.dart';
 import 'package:invoicemaker/presentation/documents/template_picker_screen.dart';
@@ -76,9 +74,6 @@ sealed class AppNavigator {
     );
   }
 
-  static Future<void> openCustomerList(BuildContext context) =>
-      _push<void>(context, const CustomerListScreen());
-
   /// Resolves to the saved customer, or null if abandoned.
   static Future<Customer?> openCustomerEditor(
     BuildContext context, {
@@ -89,9 +84,6 @@ sealed class AppNavigator {
       CustomerEditorScreen(customer: customer),
     );
   }
-
-  static Future<void> openCatalogList(BuildContext context) =>
-      _push<void>(context, const CatalogListScreen());
 
   /// Resolves to the saved item, or null if abandoned.
   static Future<CatalogItem?> openCatalogEditor(

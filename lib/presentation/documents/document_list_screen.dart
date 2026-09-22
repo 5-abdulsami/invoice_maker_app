@@ -230,8 +230,6 @@ class _DocumentListScreenState extends State<DocumentListScreen>
       message: widget.kind.isInvoice
           ? AppCopy.noDocumentsBody
           : 'Send a quote before you invoice, and convert it in one tap.',
-      actionLabel: 'New ${widget.kind.label.toLowerCase()}',
-      onAction: _create,
     );
   }
 }

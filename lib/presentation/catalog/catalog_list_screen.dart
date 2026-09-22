@@ -108,12 +108,10 @@ class _CatalogListScreenState extends State<CatalogListScreen> {
       );
     }
 
-    return AppEmptyState(
+    return const AppEmptyState(
       icon: Icons.inventory_2_outlined,
       title: AppCopy.noItemsTitle,
       message: AppCopy.noItemsBody,
-      actionLabel: AppStrings.newItem,
-      onAction: _open,
     );
   }
 }

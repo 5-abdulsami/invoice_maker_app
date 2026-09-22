@@ -308,19 +308,23 @@ class _LogoPicker extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: SizedBox.square(
-              dimension: _size,
-              child: bytes == null
-                  ? Icon(
+            child: bytes == null
+                ? SizedBox.square(
+                    dimension: _size,
+                    child: Icon(
                       Icons.add_photo_alternate_outlined,
                       size: IconSizes.lg,
                       color: palette.textTertiary,
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(Insets.sm),
-                      child: Image.memory(bytes!, fit: BoxFit.contain),
                     ),
-            ),
+                  )
+                // Ink rather than Image, so the tap ripple still shows on
+                // top of the logo; cover fills the rounded box edge to edge.
+                : Ink.image(
+                    image: MemoryImage(bytes!),
+                    fit: BoxFit.cover,
+                    width: _size,
+                    height: _size,
+                  ),
           ),
         ),
         Gap.h8,

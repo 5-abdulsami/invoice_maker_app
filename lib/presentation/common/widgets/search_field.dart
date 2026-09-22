@@ -47,7 +47,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
   void _clear() {
     _controller.clear();
     widget.onChanged('');
-    FocusScope.of(context).unfocus();
+    context.dismissKeyboard();
   }
 
   @override
@@ -59,7 +59,7 @@ class _AppSearchFieldState extends State<AppSearchField> {
       controller: _controller,
       onChanged: widget.onChanged,
       textInputAction: TextInputAction.search,
-      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+      onTapOutside: (_) => context.dismissKeyboard(),
       style: context.text.bodyLarge,
       decoration: InputDecoration(
         hintText: widget.hint,

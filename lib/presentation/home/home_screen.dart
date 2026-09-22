@@ -43,9 +43,7 @@ class HomeScreen extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            business.isConfigured
-                ? business.profile.name
-                : AppStrings.appName,
+            business.isConfigured ? business.profile.name : AppStrings.appName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.text.titleLarge,
@@ -85,15 +83,6 @@ class HomeScreen extends StatelessWidget {
           ),
           Gap.h20,
           _SummaryRow(summary: summary, money: money),
-          Gap.h20,
-          _QuickActions(
-            onNewEstimate: () => AppNavigator.openEditor(
-              context,
-              kind: DocumentKind.estimate,
-            ),
-            onCustomers: () => AppNavigator.openCustomerList(context),
-            onItems: () => AppNavigator.openCatalogList(context),
-          ),
           if (recent.isNotEmpty) ...[
             Gap.h28,
             SectionHeader(
@@ -106,8 +95,7 @@ class HomeScreen extends StatelessWidget {
                 document: document,
                 money: settings.moneyFormatFor(document.currency),
                 dateFormat: settings.dateFormat,
-                onTap: () =>
-                    AppNavigator.openDocumentDetail(context, document),
+                onTap: () => AppNavigator.openDocumentDetail(context, document),
               ),
               Gap.h12,
             ],
@@ -274,87 +262,6 @@ class _SummaryTile extends StatelessWidget {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(value, style: context.textRoles.amountLarge),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Secondary destinations, as one row of equal buttons.
-class _QuickActions extends StatelessWidget {
-  const _QuickActions({
-    required this.onNewEstimate,
-    required this.onCustomers,
-    required this.onItems,
-  });
-
-  final VoidCallback onNewEstimate;
-  final VoidCallback onCustomers;
-  final VoidCallback onItems;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _QuickAction(
-            label: AppStrings.newEstimate,
-            icon: Icons.description_outlined,
-            onTap: onNewEstimate,
-          ),
-        ),
-        Gap.w8,
-        Expanded(
-          child: _QuickAction(
-            label: AppStrings.customers,
-            icon: Icons.people_outline,
-            onTap: onCustomers,
-          ),
-        ),
-        Gap.w8,
-        Expanded(
-          child: _QuickAction(
-            label: AppStrings.catalog,
-            icon: Icons.inventory_2_outlined,
-            onTap: onItems,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Insets.sm,
-        vertical: Insets.md,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: IconSizes.md, color: context.palette.primary),
-          Gap.h8,
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: context.text.labelMedium,
           ),
         ],
       ),

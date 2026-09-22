@@ -8,7 +8,6 @@ sealed class AppStrings {
 
   // Navigation destinations.
   static const String home = 'Home';
-  static const String documents = 'Documents';
   static const String customers = 'Customers';
   static const String catalog = 'Items';
   static const String settings = 'Settings';
@@ -124,8 +123,7 @@ sealed class AppCopy {
   // Home.
   static const String homeGreeting = 'Your workspace';
   static const String homePrimaryAction = 'Create an invoice';
-  static const String homePrimaryHint =
-      'Bill a customer in a few taps. Everything stays on this device.';
+  static const String homePrimaryHint = 'Bill a customer in a few taps.';
   static const String outstandingLabel = 'Outstanding';
   static const String overdueLabel = 'Overdue';
   static const String paidLabel = 'Paid';
