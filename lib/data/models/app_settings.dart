@@ -145,8 +145,10 @@ class AppSettings {
         Json.string(json, 'defaultTemplate'),
       ),
       dateFormat: DateFormatOption.fromName(Json.string(json, 'dateFormat')),
+      // Read from a new key: the old one held a single style forced on every
+      // currency, so earlier installs start on "Match currency" instead.
       numberGrouping: NumberGroupingOption.fromName(
-        Json.string(json, 'numberGrouping'),
+        Json.string(json, _numberFormatKey),
       ),
       themeOption: AppThemeOption.fromName(Json.string(json, 'themeOption')),
       defaultTaxLabel: Json.string(json, 'defaultTaxLabel'),
@@ -164,11 +166,13 @@ class AppSettings {
     );
   }
 
+  static const String _numberFormatKey = 'numberFormat';
+
   JsonMap toJson() => {
         'defaultCurrency': defaultCurrency.code,
         'defaultTemplate': defaultTemplate.name,
         'dateFormat': dateFormat.name,
-        'numberGrouping': numberGrouping.name,
+        _numberFormatKey: numberGrouping.name,
         'themeOption': themeOption.name,
         'defaultTaxLabel': defaultTaxLabel,
         'defaultTaxPercent': defaultTaxPercent,

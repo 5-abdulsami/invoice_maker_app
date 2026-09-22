@@ -67,6 +67,78 @@ void main() {
     });
   });
 
+  group('MoneyFormat matching the currency', () {
+    String format(Currency currency, num value) => MoneyFormat(
+          currency: currency,
+          grouping: NumberGroupingOption.automatic,
+        ).format(value);
+
+    test('writes rupees with commas, never dots', () {
+      expect(format(Currency.pkr, 3000), 'Rs 3,000');
+      expect(format(Currency.pkr, 50000), 'Rs 50,000');
+      expect(format(Currency.pkr, 1000000), 'Rs 1,000,000');
+    });
+
+    test('groups Indian, Bangladeshi and Nepalese amounts in lakhs', () {
+      expect(format(Currency.inr, 100000), '₹1,00,000.00');
+      expect(format(Currency.inr, 12345678.9), '₹1,23,45,678.90');
+      expect(format(Currency.bdt, 1500), 'BDT 1,500.00');
+      expect(format(Currency.npr, 250000), 'NPR 2,50,000.00');
+    });
+
+    test("follows each currency's own separators", () {
+      expect(format(Currency.usd, 1234.5), r'$1,234.50');
+      expect(format(Currency.eur, 1234.56), '€1.234,56');
+      expect(format(Currency.chf, 1234.5), "CHF 1'234.50");
+      expect(format(Currency.sek, 1234.5), 'SEK 1 234,50');
+      expect(format(Currency.idr, 2500000), 'Rp 2.500.000');
+      expect(format(Currency.jpy, 1234567), '¥1,234,567');
+    });
+
+    test('leaves short amounts ungrouped', () {
+      expect(format(Currency.inr, 999), '₹999.00');
+      expect(format(Currency.pkr, 0), 'Rs 0');
+    });
+
+    test('keeps the sign outside the grouping', () {
+      const money = MoneyFormat(
+        currency: Currency.inr,
+        grouping: NumberGroupingOption.automatic,
+      );
+
+      expect(money.formatNegated(100000), '-₹1,00,000.00');
+      expect(money.format(-100000), '-₹1,00,000.00');
+      expect(money.formatNegated(0), '₹0.00');
+    });
+
+    test("writes a percentage with the currency's decimal separator", () {
+      const euro = MoneyFormat(
+        currency: Currency.eur,
+        grouping: NumberGroupingOption.automatic,
+      );
+
+      expect(euro.percent(12.5), '12,5%');
+      expect(euro.percent(20), '20%');
+    });
+
+    test('a forced style overrides the currency', () {
+      const forced = MoneyFormat(
+        currency: Currency.inr,
+        grouping: NumberGroupingOption.comma,
+      );
+
+      expect(forced.format(100000), '₹100,000.00');
+    });
+
+    test('labels each option with a sample', () {
+      expect(NumberGroupingOption.automatic.label, 'Match currency');
+      expect(NumberGroupingOption.comma.label, '1,234.56');
+      expect(NumberGroupingOption.dot.label, '1.234,56');
+      expect(NumberGroupingOption.space.label, '1 234.56');
+      expect(NumberGroupingOption.none.label, '1234.56');
+    });
+  });
+
   group('Money.round', () {
     test('rounds to the requested number of decimals', () {
       expect(Money.round(1.0051, 2), 1.01);

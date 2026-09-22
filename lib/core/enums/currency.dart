@@ -1,3 +1,5 @@
+import 'package:invoicemaker/core/utils/number_style.dart';
+
 /// Currencies a user can bill in.
 ///
 /// [symbol] is what appears beside an amount. Codes are used instead of a
@@ -5,9 +7,9 @@
 /// an invoice never renders a missing-character box.
 enum Currency {
   usd('USD', r'$', 'US Dollar', 2),
-  eur('EUR', '€', 'Euro', 2),
+  eur('EUR', '€', 'Euro', 2, NumberStyle.dotComma),
   gbp('GBP', '£', 'British Pound', 2),
-  inr('INR', '₹', 'Indian Rupee', 2),
+  inr('INR', '₹', 'Indian Rupee', 2, NumberStyle.lakh),
   jpy('JPY', '¥', 'Japanese Yen', 0),
   pkr('PKR', 'Rs', 'Pakistani Rupee', 0),
   aed('AED', 'AED', 'UAE Dirham', 2),
@@ -17,30 +19,36 @@ enum Currency {
   cad('CAD', r'C$', 'Canadian Dollar', 2),
   aud('AUD', r'A$', 'Australian Dollar', 2),
   nzd('NZD', r'NZ$', 'New Zealand Dollar', 2),
-  chf('CHF', 'CHF', 'Swiss Franc', 2),
-  sek('SEK', 'SEK', 'Swedish Krona', 2),
-  nok('NOK', 'NOK', 'Norwegian Krone', 2),
-  zar('ZAR', 'R', 'South African Rand', 2),
+  chf('CHF', 'CHF', 'Swiss Franc', 2, NumberStyle.apostropheDot),
+  sek('SEK', 'SEK', 'Swedish Krona', 2, NumberStyle.spaceComma),
+  nok('NOK', 'NOK', 'Norwegian Krone', 2, NumberStyle.spaceComma),
+  zar('ZAR', 'R', 'South African Rand', 2, NumberStyle.spaceComma),
   ngn('NGN', 'NGN', 'Nigerian Naira', 2),
   kes('KES', 'KES', 'Kenyan Shilling', 2),
   egp('EGP', 'EGP', 'Egyptian Pound', 2),
-  bdt('BDT', 'BDT', 'Bangladeshi Taka', 2),
+  bdt('BDT', 'BDT', 'Bangladeshi Taka', 2, NumberStyle.lakh),
   lkr('LKR', 'LKR', 'Sri Lankan Rupee', 2),
-  npr('NPR', 'NPR', 'Nepalese Rupee', 2),
+  npr('NPR', 'NPR', 'Nepalese Rupee', 2, NumberStyle.lakh),
   myr('MYR', 'RM', 'Malaysian Ringgit', 2),
   sgd('SGD', r'S$', 'Singapore Dollar', 2),
-  idr('IDR', 'Rp', 'Indonesian Rupiah', 0),
+  idr('IDR', 'Rp', 'Indonesian Rupiah', 0, NumberStyle.dotComma),
   php('PHP', 'PHP', 'Philippine Peso', 2),
   thb('THB', 'THB', 'Thai Baht', 2),
-  vnd('VND', 'VND', 'Vietnamese Dong', 0),
+  vnd('VND', 'VND', 'Vietnamese Dong', 0, NumberStyle.dotComma),
   cny('CNY', 'CNY', 'Chinese Yuan', 2),
-  tryLira('TRY', 'TRY', 'Turkish Lira', 2),
-  brl('BRL', r'R$', 'Brazilian Real', 2),
+  tryLira('TRY', 'TRY', 'Turkish Lira', 2, NumberStyle.dotComma),
+  brl('BRL', r'R$', 'Brazilian Real', 2, NumberStyle.dotComma),
   mxn('MXN', r'MX$', 'Mexican Peso', 2),
-  ars('ARS', 'ARS', 'Argentine Peso', 2),
-  pln('PLN', 'PLN', 'Polish Zloty', 2);
+  ars('ARS', 'ARS', 'Argentine Peso', 2, NumberStyle.dotComma),
+  pln('PLN', 'PLN', 'Polish Zloty', 2, NumberStyle.spaceComma);
 
-  const Currency(this.code, this.symbol, this.displayName, this.decimalDigits);
+  const Currency(
+    this.code,
+    this.symbol,
+    this.displayName,
+    this.decimalDigits, [
+    this.numberStyle = NumberStyle.commaDot,
+  ]);
 
   /// ISO 4217 code, e.g. `USD`.
   final String code;
@@ -52,6 +60,10 @@ enum Currency {
 
   /// Minor units this currency is normally written with.
   final int decimalDigits;
+
+  /// How amounts in this currency are conventionally separated, used unless
+  /// the user forces one style in settings.
+  final NumberStyle numberStyle;
 
   /// Whether the symbol needs a space before the digits.
   ///

@@ -1,5 +1,6 @@
 import 'package:invoicemaker/core/enums/currency.dart';
 import 'package:invoicemaker/core/enums/formats.dart';
+import 'package:invoicemaker/core/utils/number_style.dart';
 
 /// Rounding and formatting of money amounts.
 ///
@@ -31,9 +32,10 @@ sealed class Money {
   }
 }
 
-/// Formats amounts and percentages using the user's chosen separators.
+/// Formats amounts and percentages.
 ///
-/// Separators come from settings rather than the device locale so the numbers
+/// Separators follow the currency's own convention unless the user forces a
+/// style in settings. They never come from the device locale, so the numbers
 /// on screen always match the numbers printed on the PDF.
 class MoneyFormat {
   const MoneyFormat({required this.currency, required this.grouping});
@@ -41,65 +43,40 @@ class MoneyFormat {
   /// A default used before settings have loaded.
   const MoneyFormat.fallback()
       : currency = Currency.fallback,
-        grouping = NumberGroupingOption.comma;
+        grouping = NumberGroupingOption.fallback;
 
   final Currency currency;
   final NumberGroupingOption grouping;
 
   /// `$1,234.56` — the standard form used across the app and the PDFs.
+  ///
+  /// A negative amount carries its sign before the symbol: `-$40.00`.
   String format(num value, {bool withSymbol = true}) {
-    final digits = _digits(value.toDouble(), currency.decimalDigits);
-    if (!withSymbol) return digits;
+    final rounded = Money.round(value.toDouble(), currency.decimalDigits);
+    final digits =
+        style.apply(rounded.abs().toStringAsFixed(currency.decimalDigits));
+    final sign = rounded < 0 ? '-' : '';
+
+    if (!withSymbol) return '$sign$digits';
     return currency.symbolNeedsSpace
-        ? '${currency.symbol} $digits'
-        : '${currency.symbol}$digits';
+        ? '$sign${currency.symbol} $digits'
+        : '$sign${currency.symbol}$digits';
   }
 
-  /// `-$40.00` — a deduction, with the sign before the symbol.
-  String formatNegated(num value) {
-    if (value == 0) return format(0);
-    return '-${format(value.abs())}';
-  }
+  /// `-$40.00` — a deduction, whatever the sign of [value].
+  String formatNegated(num value) => format(-value.abs());
 
-  /// `12.5%`, with no trailing zeros.
+  /// `12.5%`, with no trailing zeros and the style's decimal separator.
   String percent(num value) {
     final rounded = Money.round(value.toDouble(), _percentDigits);
     final text = rounded
         .toStringAsFixed(_percentDigits)
         .replaceFirst(RegExp(r'\.?0+$'), '');
-    return '$text%';
+    return '${style.apply(text)}%';
   }
 
-  /// The digits only, grouped and with the decimal separator applied.
-  String _digits(double value, int decimalDigits) {
-    final rounded = Money.round(value, decimalDigits);
-    final isNegative = rounded < 0;
-    final fixed = rounded.abs().toStringAsFixed(decimalDigits);
-
-    final parts = fixed.split('.');
-    final grouped = _group(parts.first);
-    final body = parts.length > 1
-        ? '$grouped${grouping.decimalSeparator}${parts[1]}'
-        : grouped;
-
-    return isNegative ? '-$body' : body;
-  }
-
-  /// Inserts the group separator every three digits from the right.
-  String _group(String integerDigits) {
-    final separator = grouping.groupSeparator;
-    if (separator.isEmpty || integerDigits.length < 4) return integerDigits;
-
-    final buffer = StringBuffer();
-    final firstGroup = integerDigits.length % 3;
-    if (firstGroup > 0) buffer.write(integerDigits.substring(0, firstGroup));
-
-    for (var i = firstGroup; i < integerDigits.length; i += 3) {
-      if (buffer.isNotEmpty) buffer.write(separator);
-      buffer.write(integerDigits.substring(i, i + 3));
-    }
-    return buffer.toString();
-  }
+  /// The separators amounts in [currency] are written with.
+  NumberStyle get style => grouping.styleFor(currency);
 
   static const int _percentDigits = 2;
 

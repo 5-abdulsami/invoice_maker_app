@@ -1,3 +1,6 @@
+import 'package:invoicemaker/core/enums/currency.dart';
+import 'package:invoicemaker/core/utils/number_style.dart';
+
 /// Date presentation styles offered in settings.
 enum DateFormatOption {
   dayMonthYear('dd/MM/yyyy', '31/12/2026'),
@@ -24,27 +27,33 @@ enum DateFormatOption {
   }
 }
 
-/// Digit grouping styles offered in settings.
+/// The number styles offered in settings.
+///
+/// [automatic] follows each amount's own currency, so one document in rupees
+/// and another in euros are each written the way their readers expect. The
+/// others force one style everywhere, for users who prefer their own.
 enum NumberGroupingOption {
-  comma('1,234.56', ',', '.'),
-  dot('1.234,56', '.', ','),
-  space('1 234.56', ' ', '.'),
-  none('1234.56', '', '.');
+  automatic(null),
+  comma(NumberStyle.commaDot),
+  dot(NumberStyle.dotComma),
+  space(NumberStyle.spaceDot),
+  none(NumberStyle.plainDot);
 
-  const NumberGroupingOption(
-    this.example,
-    this.groupSeparator,
-    this.decimalSeparator,
-  );
+  const NumberGroupingOption(this._style);
 
-  final String example;
+  /// The forced style, or null to follow the currency.
+  final NumberStyle? _style;
 
-  /// Thousands separator; empty when digits are not grouped.
-  final String groupSeparator;
+  /// The style an amount in [currency] is written in.
+  NumberStyle styleFor(Currency currency) => _style ?? currency.numberStyle;
 
-  final String decimalSeparator;
+  /// Shown in settings, e.g. `1,234.56`.
+  String get label => switch (_style) {
+        null => 'Match currency',
+        final style => style.apply('1234.56'),
+      };
 
-  static const NumberGroupingOption fallback = NumberGroupingOption.comma;
+  static const NumberGroupingOption fallback = NumberGroupingOption.automatic;
 
   static NumberGroupingOption fromName(String? name) {
     for (final option in values) {

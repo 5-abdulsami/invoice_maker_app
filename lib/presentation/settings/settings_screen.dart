@@ -51,7 +51,10 @@ class SettingsScreen extends StatelessWidget {
       title: AppStrings.numberFormat,
       options: NumberGroupingOption.values,
       selected: controller.settings.numberGrouping,
-      labelOf: (value) => value.example,
+      labelOf: (value) => value.label,
+      subtitleOf: (value) => value == NumberGroupingOption.automatic
+          ? r'Rs 3,000 · ₹1,00,000.00 · $3,000.00 · €3.000,00'
+          : null,
     );
     if (option == null) return;
     await controller.setNumberGrouping(option);
@@ -143,7 +146,7 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 AppTile(
                   title: AppStrings.numberFormat,
-                  value: values.numberGrouping.example,
+                  value: values.numberGrouping.label,
                   icon: Icons.numbers,
                   onTap: () => _pickNumberFormat(context),
                 ),
