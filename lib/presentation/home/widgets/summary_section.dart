@@ -97,10 +97,12 @@ class _CurrencySwitcher extends StatelessWidget {
 
 /// The three figures, sized together.
 ///
+/// Money is never truncated: every amount is always shown in full.
+///
 /// All three amounts share one type size, shrunk just enough for the longest
 /// to fit, so a large balance never makes its neighbours look mismatched.
-/// When the amounts are too long to sit side by side legibly, the tiles
-/// stack and each amount gets the full width.
+/// When that would make them too small to read, the tiles stack and each
+/// amount gets the full width instead.
 class _SummaryTiles extends StatelessWidget {
   const _SummaryTiles({required this.summary, required this.money});
 
@@ -111,6 +113,10 @@ class _SummaryTiles extends StatelessWidget {
   static const double _minSideBySideScale = 0.72;
 
   static const double _tilePadding = Insets.md;
+
+  /// Headroom on the measured width. Glyph advances do not shrink exactly in
+  /// proportion to the font size, so the shared size aims slightly small.
+  static const double _fitMargin = 0.98;
 
   @override
   Widget build(BuildContext context) {
@@ -139,14 +145,13 @@ class _SummaryTiles extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         const gaps = Insets.sm * 2;
-        final innerWidth =
-            (constraints.maxWidth - gaps) / 3 - _tilePadding * 2 - 2;
+        final innerWidth = (constraints.maxWidth - gaps) / 3 - _tilePadding * 2;
         final widest = _widestText(
           [for (final figure in figures) figure.value],
           amountStyle,
           scaler,
         );
-        final scale = math.min(1.0, innerWidth / widest);
+        final scale = math.min(1.0, innerWidth * _fitMargin / widest);
 
         if (context.isCompactWidth || scale < _minSideBySideScale) {
           return Column(
@@ -238,13 +243,7 @@ class _SideBySideTile extends StatelessWidget {
         children: [
           _FigureLabel(figure: figure),
           Gap.h8,
-          Text(
-            figure.value,
-            style: amountStyle,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.fade,
-          ),
+          _FullAmount(value: figure.value, style: amountStyle),
         ],
       ),
     );
@@ -272,15 +271,41 @@ class _StackedTile extends StatelessWidget {
           // Only an extreme amount on a tiny screen ever needs shrinking.
           Expanded(
             flex: 2,
-            child: Align(
+            child: _FullAmount(
+              value: figure.value,
+              style: amountStyle,
               alignment: Alignment.centerRight,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(figure.value, style: amountStyle, maxLines: 1),
-              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// An amount that always shows every digit.
+///
+/// Laid out at [style]'s size and shrunk only if it still does not fit, so it
+/// can never be clipped, faded or ellipsised.
+class _FullAmount extends StatelessWidget {
+  const _FullAmount({
+    required this.value,
+    required this.style,
+    this.alignment = Alignment.centerLeft,
+  });
+
+  final String value;
+  final TextStyle style;
+  final AlignmentGeometry alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: alignment,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignment,
+        child: Text(value, style: style, maxLines: 1, softWrap: false),
       ),
     );
   }

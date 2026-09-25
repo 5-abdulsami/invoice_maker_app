@@ -4,7 +4,7 @@
 /// and means no screen hardcodes a string.
 sealed class AppStrings {
   static const String appName = 'Invoice Maker';
-  static const String tagline = 'Invoices and estimates, made on your phone';
+  static const String tagline = 'Invoices and estimates in seconds';
 
   // Navigation destinations.
   static const String home = 'Home';
@@ -173,8 +173,7 @@ sealed class AppCopy {
   static const String deleteItemBody =
       'Documents that already use it will not change.';
   static const String discardChangesTitle = 'Discard your changes?';
-  static const String discardChangesBody =
-      'This document has unsaved changes.';
+  static const String discardChangesBody = 'This document has unsaved changes.';
   static const String discardAction = 'Discard';
   static const String keepEditingAction = 'Keep editing';
 
@@ -230,6 +229,7 @@ sealed class AppCopy {
       'The amount paid cannot be more than the total';
 
   // Failures.
-  static const String genericFailure = 'Something went wrong. Please try again.';
+  static const String genericFailure =
+      'Something went wrong. Please try again.';
   static const String noPreviewAvailable = 'Preview unavailable';
 }
