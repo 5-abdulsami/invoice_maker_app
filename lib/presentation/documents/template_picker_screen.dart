@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
 import 'package:invoicemaker/core/enums/invoice_template.dart';
@@ -41,6 +43,16 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
   static const double _viewportFraction = 0.82;
 
   @override
+  void initState() {
+    super.initState();
+    // Usually already done by the detail screen; otherwise renders the rest
+    // in the background so swiping lands on a finished page.
+    unawaited(
+      DocumentPreview.precacheAll(context, document: widget.document),
+    );
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -69,8 +81,6 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
             child: PageView.builder(
               controller: _controller,
               itemCount: _templates.length,
-              // Built lazily: rendering all eight PDFs at once would stall
-              // the screen on a slower phone.
               onPageChanged: (index) => setState(() => _index = index),
               itemBuilder: (context, index) {
                 return Padding(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
@@ -40,6 +42,20 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen>
   SalesDocument _current(BuildContext context) =>
       context.watch<DocumentController>().byId(widget.document.id) ??
       widget.document;
+
+  @override
+  void initState() {
+    super.initState();
+    // Renders the other templates in the background once this screen has
+    // settled, so "Change" opens the picker onto finished pages.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final document =
+          context.read<DocumentController>().byId(widget.document.id) ??
+              widget.document;
+      unawaited(DocumentPreview.precacheAll(context, document: document));
+    });
+  }
 
   Future<void> _output(SalesDocument document, PdfAction action) async {
     await run(

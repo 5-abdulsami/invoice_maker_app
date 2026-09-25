@@ -26,17 +26,23 @@ class PdfFonts {
   final pw.Font narrowRegular;
   final pw.Font narrowBold;
 
-  static PdfFonts? _cached;
+  static Future<PdfFonts>? _cached;
 
   /// Loads and caches the bundled fonts.
   ///
   /// Parsing a font is not cheap, so the result is reused for the lifetime of
-  /// the process; generating twenty PDFs loads them once.
-  static Future<PdfFonts> load() async {
-    final cached = _cached;
-    if (cached != null) return cached;
+  /// the process; generating twenty PDFs loads them once. The load itself is
+  /// shared too, so previews that start together do not each parse the fonts.
+  static Future<PdfFonts> load() {
+    return _cached ??= _load().catchError((Object error) {
+      // A failed load is not cached, so the next attempt tries again.
+      _cached = null;
+      throw error;
+    });
+  }
 
-    final fonts = PdfFonts(
+  static Future<PdfFonts> _load() async {
+    return PdfFonts(
       regular: await _font('roboto-regular'),
       medium: await _font('roboto-medium'),
       bold: await _font('roboto-bold'),
@@ -45,9 +51,6 @@ class PdfFonts {
       narrowRegular: await _font('robotocondensed-regular'),
       narrowBold: await _font('robotocondensed-bold'),
     );
-
-    _cached = fonts;
-    return fonts;
   }
 
   static Future<pw.Font> _font(String name) async {
