@@ -147,11 +147,11 @@ void main() {
       );
     });
 
-    test('offers eight layouts, five of them free', () {
-      expect(InvoiceTemplate.values, hasLength(8));
+    test('offers thirty layouts, thirteen of them free', () {
+      expect(InvoiceTemplate.values, hasLength(30));
       expect(
         InvoiceTemplate.values.where((template) => !template.isPro),
-        hasLength(5),
+        hasLength(13),
       );
     });
   });
@@ -161,6 +161,26 @@ void main() {
       expect(_bundledFonts.regular, isNotNull);
       expect(_bundledFonts.narrowBold, isNotNull);
       expect(await PdfFonts.load(), same(_bundledFonts));
+    });
+
+    test('every typeface a template uses is bundled', () async {
+      // Fails if a font file is missing from pubspec.yaml's asset list.
+      for (final typeface in PdfTypeface.values) {
+        final fonts = await PdfFonts.load(typeface);
+        expect(fonts.display, isNotNull, reason: typeface.name);
+      }
+    });
+
+    test('every layout renders in its own typeface', () async {
+      for (final template in InvoiceTemplate.values) {
+        final layout = PdfTemplateRegistry.resolve(template);
+        final bytes = await _render(
+          template,
+          _document(currency: Currency.eur, lines: [_line('Work', 100, 1)]),
+          fonts: await PdfFonts.load(layout.typeface),
+        );
+        expect(_isPdf(bytes), isTrue, reason: template.name);
+      }
     });
 
     test('draw the currency symbols the built-in fonts cannot', () async {

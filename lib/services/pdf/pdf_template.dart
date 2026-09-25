@@ -1,4 +1,5 @@
 import 'package:invoicemaker/core/enums/invoice_template.dart';
+import 'package:invoicemaker/services/pdf/pdf_fonts.dart';
 import 'package:invoicemaker/services/pdf/pdf_render_data.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -14,6 +15,10 @@ abstract class PdfTemplate {
   InvoiceTemplate get id;
 
   String get label => id.label;
+
+  /// The type family this layout is set in; its fonts arrive in the render
+  /// data, loaded before [build] runs.
+  PdfTypeface get typeface => PdfTypeface.standard;
 
   /// Builds the document. Must not perform I/O.
   pw.Document build(PdfRenderData data);

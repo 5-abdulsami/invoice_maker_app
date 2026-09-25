@@ -52,23 +52,33 @@ class DocumentPreview extends StatefulWidget {
     }
   }
 
-  /// Renders [document] in every template, starting with its own and
-  /// spreading outwards in picker order, so the template picker opens onto
-  /// finished pages.
+  /// Renders [document] in the templates within [radius] places of
+  /// [around] in picker order, nearest first, so swiping onto a neighbour
+  /// lands on a finished page.
   ///
-  /// One at a time: rendering all of them together would stall the screen on
-  /// a slower phone. Stops early once [context] is unmounted.
-  static Future<void> precacheAll(
+  /// Only the neighbourhood is warmed: rendering every layout up front would
+  /// spend battery on pages the user never looks at. One at a time, so the
+  /// warm-up never competes with the page on screen. Stops early once
+  /// [context] is unmounted or [keepGoing] turns false, e.g. when the user
+  /// has already swiped on.
+  static Future<void> precacheAround(
     BuildContext context, {
     required SalesDocument document,
+    required InvoiceTemplate around,
+    int radius = 2,
+    bool Function()? keepGoing,
   }) async {
     const templates = InvoiceTemplate.values;
-    final start = templates.indexOf(document.template);
-    final order = List<int>.generate(templates.length, (i) => i)
-      ..sort((a, b) => (a - start).abs().compareTo((b - start).abs()));
+    final start = templates.indexOf(around);
+    final order = [
+      for (var step = 1; step <= radius; step++) ...[
+        start + step,
+        start - step,
+      ],
+    ].where((index) => index >= 0 && index < templates.length);
 
     for (final index in order) {
-      if (!context.mounted) return;
+      if (!context.mounted || !(keepGoing?.call() ?? true)) return;
       await precache(context, document: document, template: templates[index]);
     }
   }
@@ -198,7 +208,7 @@ class _PreviewEntry {
 /// Rendering a template takes a noticeable moment, and the picker, the
 /// detail screen and the full-screen preview often ask for the same page.
 class _PreviewCache {
-  static const int _capacity = 16;
+  static const int _capacity = 24;
 
   static final LinkedHashMap<String, _PreviewEntry> _entries =
       LinkedHashMap<String, _PreviewEntry>();

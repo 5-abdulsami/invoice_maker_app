@@ -46,6 +46,26 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Typefaces used only inside the PDF templates, read on demand by the
+  # templates that need them. Licences are in assets/fonts/licenses.
+  assets:
+    - assets/fonts/serif-regular.ttf
+    - assets/fonts/serif-bold.ttf
+    - assets/fonts/serif-italic.ttf
+    - assets/fonts/abrilfatface-regular.ttf
+    - assets/fonts/librefranklin-regular.ttf
+    - assets/fonts/librefranklin-medium.ttf
+    - assets/fonts/librefranklin-bold.ttf
+    - assets/fonts/rubik-regular.ttf
+    - assets/fonts/rubik-medium.ttf
+    - assets/fonts/rubik-bold.ttf
+    - assets/fonts/lato-regular.ttf
+    - assets/fonts/lato-bold.ttf
+    - assets/fonts/lato-italic.ttf
+    - assets/fonts/robotomono-regular.ttf
+    - assets/fonts/oswald-medium.ttf
+    - assets/fonts/oswald-semibold.ttf
+
   fonts:
     # Bundled so the UI and the generated PDFs share one typeface, and so PDFs
     # can draw currency symbols the built-in Latin-1 PDF fonts cannot.

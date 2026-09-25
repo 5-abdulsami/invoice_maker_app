@@ -9,6 +9,7 @@ import 'package:invoicemaker/services/file_vault.dart';
 import 'package:invoicemaker/services/pdf/pdf_fonts.dart';
 import 'package:invoicemaker/services/pdf/pdf_output.dart';
 import 'package:invoicemaker/services/pdf/pdf_render_data.dart';
+import 'package:invoicemaker/services/pdf/pdf_template.dart';
 import 'package:invoicemaker/services/pdf/pdf_template_registry.dart';
 
 /// Turns a document into a PDF and does something with it.
@@ -41,11 +42,13 @@ class DocumentPdfService {
     required DateFormatOption dateFormat,
     InvoiceTemplate? templateOverride,
   }) async {
-    final fonts = await PdfFonts.load();
+    final template = PdfTemplateRegistry.resolve(
+      templateOverride ?? document.template,
+    );
 
     final data = PdfRenderData(
       document: document,
-      fonts: fonts,
+      fonts: await PdfFonts.load(template.typeface),
       // Built from the document's own currency so a document billed in one
       // currency never prints another's symbol.
       moneyFormat: MoneyFormat(
@@ -57,17 +60,38 @@ class DocumentPdfService {
       signatureBytes: await _vault?.readBytes(document.signaturePath),
     );
 
-    final template = PdfTemplateRegistry.resolve(
-      templateOverride ?? document.template,
-    );
-
-    final pdf = _guard(() => template.build(data));
+    final bytes = await _encode(template, data);
 
     return _output.run(
-      document: pdf,
+      bytes: bytes,
       fileName: _fileName(document),
       action: action,
     );
+  }
+
+  /// Lays out and serialises the PDF on a background isolate.
+  ///
+  /// Layout and font subsetting are the slow part of a render; kept off the
+  /// UI thread, swiping the template picker stays smooth while pages build,
+  /// and several previews can build at once on a multi-core phone.
+  static Future<Uint8List> _encode(
+    PdfTemplate template,
+    PdfRenderData data,
+  ) async {
+    try {
+      return await compute(_buildAndSave, (template, data));
+    } on AppException {
+      rethrow;
+    } on Object catch (error) {
+      throw PdfGenerationException(error);
+    }
+  }
+
+  static Future<Uint8List> _buildAndSave(
+    (PdfTemplate, PdfRenderData) job,
+  ) {
+    final (template, data) = job;
+    return template.build(data).save();
   }
 
   /// e.g. `INV-0007 Acme Ltd`, so a shared file is recognisable.
@@ -76,15 +100,5 @@ class DocumentPdfService {
     return recipient.isEmpty
         ? document.number
         : '${document.number} $recipient';
-  }
-
-  T _guard<T>(T Function() action) {
-    try {
-      return action();
-    } on AppException {
-      rethrow;
-    } on Object catch (error) {
-      throw PdfGenerationException(error);
-    }
   }
 }

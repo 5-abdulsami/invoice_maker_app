@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:invoicemaker/core/enums/pdf_action.dart';
 import 'package:invoicemaker/core/exceptions/app_exception.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 /// Does something with a finished PDF.
@@ -19,29 +18,19 @@ class PdfOutput {
   /// when the template picker renders several pages.
   static const double _previewDpi = 96;
 
-  /// Runs [action] against [document].
+  /// Runs [action] against the finished file [bytes].
   ///
   /// Returns PNG bytes for [PdfAction.preview] and null for the rest.
   Future<Uint8List?> run({
-    required pw.Document document,
+    required Uint8List bytes,
     required String fileName,
     required PdfAction action,
   }) async {
-    final bytes = await _save(document);
-
     return switch (action) {
       PdfAction.preview => _rasterFirstPage(bytes),
       PdfAction.share => _share(bytes, fileName),
       PdfAction.print => _print(bytes, fileName),
     };
-  }
-
-  Future<Uint8List> _save(pw.Document document) async {
-    try {
-      return await document.save();
-    } on Object catch (error) {
-      throw PdfGenerationException(error);
-    }
   }
 
   /// Renders page one to an image for the in-app preview.

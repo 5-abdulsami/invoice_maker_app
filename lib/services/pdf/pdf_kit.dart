@@ -40,8 +40,7 @@ class ItemTableSpec {
     bool allowTaxColumn = true,
   }) {
     final lines = data.totals.lines;
-    final hasRowDiscount =
-        lines.any((line) => line.line.discountPercent > 0);
+    final hasRowDiscount = lines.any((line) => line.line.discountPercent > 0);
     final hasRowTax = lines.any((line) => line.taxAmount > 0);
 
     return ItemTableSpec(
@@ -97,6 +96,33 @@ enum TableStyle {
 
   /// No rules at all; spacing does the work.
   open,
+
+  /// A pale accent heading row with accent text, hairlines between rows.
+  softHeader,
+
+  /// A heavy accent rule under the heading, hairlines between rows.
+  underlineHeader,
+
+  /// Dashed rules between rows, like a till receipt.
+  dashed,
+}
+
+/// How the grand total is set apart from the rows above it.
+enum TotalFinish {
+  /// Bold text, no fill.
+  plain,
+
+  /// Reversed out of a solid accent bar.
+  accentBar,
+
+  /// Accent text on the pale accent wash.
+  soft,
+
+  /// Accent text inside an accent outline.
+  outlined,
+
+  /// A single rule above and an accountant's double rule below.
+  doubleRule,
 }
 
 /// Page furniture shared by every template.
@@ -130,32 +156,50 @@ sealed class PdfKit {
   }
 
   /// Name and contact details for one side of the document.
+  ///
+  /// The detail lines are spaced a touch wider than body copy: an address,
+  /// phone number and email stacked at body leading read as one grey block.
   static pw.Widget partyBlock({
     required String label,
     required PartySnapshot party,
     required PdfDocTheme theme,
     pw.CrossAxisAlignment align = pw.CrossAxisAlignment.start,
     bool showLabel = true,
+    pw.TextStyle? labelStyle,
+    pw.TextStyle? nameStyle,
+    pw.TextStyle? textStyle,
   }) {
-    final textAlign = align == pw.CrossAxisAlignment.end
-        ? pw.TextAlign.right
-        : pw.TextAlign.left;
+    final textAlign = switch (align) {
+      pw.CrossAxisAlignment.end => pw.TextAlign.right,
+      pw.CrossAxisAlignment.center => pw.TextAlign.center,
+      _ => pw.TextAlign.left,
+    };
+    final details = party.detailLines;
 
     return pw.Column(
       crossAxisAlignment: align,
       children: [
         if (showLabel) ...[
-          sectionLabel(label, theme),
-          pw.SizedBox(height: 4),
+          pw.Text(
+            label.toUpperCase(),
+            style: labelStyle ?? theme.sectionLabel,
+            textAlign: textAlign,
+          ),
+          pw.SizedBox(height: 6),
         ],
         pw.Text(
           party.name.trim().isEmpty ? '-' : party.name.trim(),
-          style: theme.partyName,
+          style: nameStyle ?? theme.partyName,
           textAlign: textAlign,
         ),
-        for (final line in party.detailLines) ...[
-          pw.SizedBox(height: 1.5),
-          pw.Text(line, style: theme.bodyText, textAlign: textAlign),
+        if (details.isNotEmpty) pw.SizedBox(height: 4),
+        for (var i = 0; i < details.length; i++) ...[
+          if (i > 0) pw.SizedBox(height: 3.5),
+          pw.Text(
+            details[i],
+            style: textStyle ?? theme.bodyText,
+            textAlign: textAlign,
+          ),
         ],
       ],
     );
@@ -168,13 +212,15 @@ sealed class PdfKit {
     bool onAccent = false,
     pw.CrossAxisAlignment align = pw.CrossAxisAlignment.end,
     double labelWidth = 74,
+    PdfColor? labelColor,
+    PdfColor? valueColor,
   }) {
-    final labelStyle = onAccent
-        ? theme.bodyText.copyWith(color: theme.onAccent)
-        : theme.bodyText.copyWith(color: theme.muted);
-    final valueStyle = onAccent
-        ? theme.bodyStrong.copyWith(color: theme.onAccent)
-        : theme.bodyStrong;
+    final labelStyle = theme.bodyText.copyWith(
+      color: labelColor ?? (onAccent ? theme.onAccent : theme.muted),
+    );
+    final valueStyle = theme.bodyStrong.copyWith(
+      color: valueColor ?? (onAccent ? theme.onAccent : theme.ink),
+    );
 
     return pw.Column(
       crossAxisAlignment: align,
@@ -202,6 +248,63 @@ sealed class PdfKit {
     );
   }
 
+  /// The meta rows as one horizontal strip of label-over-value cells.
+  static pw.Widget metaStrip(
+    List<({String label, String value})> rows,
+    PdfDocTheme theme, {
+    PdfColor? labelColor,
+    PdfColor? valueColor,
+    PdfColor? dividerColor,
+    PdfColor? topRuleColor,
+    double topRuleWidth = 1.5,
+    pw.TextStyle? valueStyle,
+    bool centered = false,
+  }) {
+    final align =
+        centered ? pw.CrossAxisAlignment.center : pw.CrossAxisAlignment.start;
+    final label = theme.sectionLabel.copyWith(color: labelColor);
+    final value = (valueStyle ?? theme.bodyStrong).copyWith(color: valueColor);
+
+    pw.Widget cell(({String label, String value}) row) {
+      final content = pw.Column(
+        crossAxisAlignment: align,
+        children: [
+          pw.Text(row.label.toUpperCase(), style: label, maxLines: 1),
+          pw.SizedBox(height: 5),
+          pw.Text(row.value, style: value, maxLines: 2),
+        ],
+      );
+      if (topRuleColor == null) return content;
+      return pw.Container(
+        padding: const pw.EdgeInsets.only(top: 7),
+        decoration: pw.BoxDecoration(
+          border: pw.Border(
+            top: pw.BorderSide(color: topRuleColor, width: topRuleWidth),
+          ),
+        ),
+        child: content,
+      );
+    }
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0)
+            dividerColor == null
+                ? pw.SizedBox(width: 14)
+                : pw.Container(
+                    width: 0.6,
+                    height: 26,
+                    margin: const pw.EdgeInsets.symmetric(horizontal: 12),
+                    color: dividerColor,
+                  ),
+          pw.Expanded(child: cell(rows[i])),
+        ],
+      ],
+    );
+  }
+
   /// The line-item table.
   ///
   /// The heading row repeats on every page, so a document that spills onto a
@@ -211,6 +314,10 @@ sealed class PdfKit {
     required PdfDocTheme theme,
     required ItemTableSpec spec,
     TableStyle style = TableStyle.ruledRows,
+    PdfColor? headerFill,
+    PdfColor? headerText,
+    PdfColor? stripeFill,
+    PdfColor? rowFill,
   }) {
     final columns = spec.columns;
     if (data.totals.lines.isEmpty) return _emptyTableNote(theme);
@@ -218,6 +325,15 @@ sealed class PdfKit {
     final headerOnAccent = style == TableStyle.headerBand ||
         style == TableStyle.fullGrid ||
         style == TableStyle.stripedRows;
+    final headerStyle = headerText != null
+        ? theme.tableHeader.copyWith(color: headerText)
+        : switch (style) {
+            TableStyle.softHeader ||
+            TableStyle.underlineHeader =>
+              theme.tableHeader.copyWith(color: theme.accent),
+            _ when headerOnAccent => theme.tableHeaderOnAccent,
+            _ => theme.tableHeader,
+          };
 
     return pw.Table(
       columnWidths: {
@@ -229,13 +345,24 @@ sealed class PdfKit {
         pw.TableRow(
           repeat: true,
           decoration: pw.BoxDecoration(
-            color: switch (style) {
-              TableStyle.headerBand ||
-              TableStyle.fullGrid ||
-              TableStyle.stripedRows =>
-                theme.accent,
-              TableStyle.ruledRows || TableStyle.open => null,
-            },
+            color: headerFill ??
+                switch (style) {
+                  TableStyle.headerBand ||
+                  TableStyle.fullGrid ||
+                  TableStyle.stripedRows =>
+                    theme.accent,
+                  TableStyle.softHeader => theme.accentSoft,
+                  TableStyle.ruledRows ||
+                  TableStyle.open ||
+                  TableStyle.underlineHeader ||
+                  TableStyle.dashed =>
+                    null,
+                },
+            border: style == TableStyle.underlineHeader
+                ? pw.Border(
+                    bottom: pw.BorderSide(color: theme.accent, width: 1.6),
+                  )
+                : null,
           ),
           children: [
             for (final column in columns)
@@ -245,9 +372,7 @@ sealed class PdfKit {
                   column == ItemColumn.amount
                       ? '${column.heading} (${data.moneyFormat.currency.code})'
                       : column.heading,
-                  style: headerOnAccent
-                      ? theme.tableHeaderOnAccent
-                      : theme.tableHeader,
+                  style: headerStyle,
                 ),
               ),
           ],
@@ -255,8 +380,10 @@ sealed class PdfKit {
         for (var index = 0; index < data.totals.lines.length; index++)
           pw.TableRow(
             decoration: style == TableStyle.stripedRows && index.isOdd
-                ? pw.BoxDecoration(color: theme.accentSoft)
-                : null,
+                ? pw.BoxDecoration(color: stripeFill ?? theme.accentSoft)
+                : rowFill == null
+                    ? null
+                    : pw.BoxDecoration(color: rowFill),
             children: [
               for (final column in columns)
                 _cell(
@@ -286,8 +413,7 @@ sealed class PdfKit {
     final line = total.line;
 
     return switch (column) {
-      ItemColumn.rowNumber =>
-        pw.Text('${index + 1}', style: theme.tableNumber),
+      ItemColumn.rowNumber => pw.Text('${index + 1}', style: theme.tableNumber),
       ItemColumn.item => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
@@ -349,9 +475,147 @@ sealed class PdfKit {
           horizontalInside: hairline,
         ),
       TableStyle.headerBand => pw.TableBorder(horizontalInside: hairline),
+      TableStyle.softHeader || TableStyle.underlineHeader => pw.TableBorder(
+          horizontalInside: hairline,
+          bottom: hairline,
+        ),
+      TableStyle.dashed => pw.TableBorder(
+          top: _dash(theme.muted),
+          bottom: _dash(theme.muted),
+          horizontalInside: _dash(theme.hairline),
+        ),
       TableStyle.stripedRows || TableStyle.open => null,
     };
   }
+
+  static pw.BorderSide _dash(PdfColor color) => pw.BorderSide(
+        color: color,
+        width: 0.6,
+        style: pw.BorderStyle.dashed,
+      );
+
+  /// A dashed horizontal rule, like the tear lines on a receipt.
+  static pw.Widget dashedRule(PdfColor color, {double width = 0.6}) {
+    return pw.Container(
+      height: 0,
+      decoration: pw.BoxDecoration(
+        border: pw.Border(
+          top: pw.BorderSide(
+            color: color,
+            width: width,
+            style: pw.BorderStyle.dashed,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Both parties side by side, the customer first unless [issuerFirst].
+  static pw.Widget parties(
+    PdfRenderData data,
+    PdfDocTheme theme, {
+    String toLabel = 'Billed to',
+    String fromLabel = 'From',
+    bool issuerFirst = false,
+    bool alignSecondEnd = false,
+    double gap = 28,
+    pw.TextStyle? labelStyle,
+    pw.TextStyle? nameStyle,
+    pw.TextStyle? textStyle,
+  }) {
+    pw.Widget block(String label, PartySnapshot party, bool end) => partyBlock(
+          label: label,
+          party: party,
+          theme: theme,
+          align: end ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+          labelStyle: labelStyle,
+          nameStyle: nameStyle,
+          textStyle: textStyle,
+        );
+
+    final to = (toLabel, data.document.recipient);
+    final from = (fromLabel, data.document.issuer);
+    final (first, second) = issuerFirst ? (from, to) : (to, from);
+
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(child: block(first.$1, first.$2, false)),
+        pw.SizedBox(width: gap),
+        pw.Expanded(child: block(second.$1, second.$2, alignSecondEnd)),
+      ],
+    );
+  }
+
+  /// The totals block on the right, with the paid marker opposite it.
+  static pw.Widget summary(
+    PdfRenderData data,
+    PdfDocTheme theme, {
+    TotalFinish finish = TotalFinish.plain,
+    double width = 250,
+  }) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        if (data.isSettledInvoice) PdfKit.paidMarker(data, theme),
+        pw.Spacer(),
+        pw.SizedBox(
+          width: width,
+          child: totalsRows(data: data, theme: theme, finish: finish),
+        ),
+      ],
+    );
+  }
+
+  /// Payment details, terms and notes beside the signature.
+  static pw.Widget closing(PdfRenderData data, PdfDocTheme theme) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Expanded(child: closingBlocks(data: data, theme: theme)),
+        if (data.hasSignature) ...[
+          pw.SizedBox(width: 24),
+          signatureBlock(data: data, theme: theme),
+        ],
+      ],
+    );
+  }
+
+  /// Whether the document carries any payment details, terms or notes.
+  static bool hasClosing(PdfRenderData data) {
+    final document = data.document;
+    return document.paymentDetails.trim().isNotEmpty ||
+        document.paymentTerms.trim().isNotEmpty ||
+        document.notes.trim().isNotEmpty;
+  }
+
+  /// A line of text centred across the full content width.
+  static pw.Widget centered(String text, pw.TextStyle style) => pw.SizedBox(
+        width: double.infinity,
+        child: pw.Text(text, style: style, textAlign: pw.TextAlign.center),
+      );
+
+  /// Up to two initials from [name], for monogram marks.
+  static String initials(String name) {
+    final words = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '-';
+    final letters =
+        words.take(2).map((word) => String.fromCharCode(word.runes.first));
+    return letters.join().toUpperCase();
+  }
+
+  /// The issuer's contact details on one line, for letterheads and strips.
+  static String contactLine(
+    PartySnapshot party, {
+    String separator = '  ·  ',
+  }) =>
+      party.detailLines
+          .map((line) => line.replaceAll(RegExp(r'\s*\n\s*'), ', '))
+          .join(separator);
 
   /// A thin horizontal rule.
   static pw.Widget rule(PdfDocTheme theme, {double? width, PdfColor? color}) =>
@@ -376,7 +640,10 @@ sealed class PdfKit {
     required PdfDocTheme theme,
     bool emphasiseTotal = true,
     bool totalOnAccent = false,
+    TotalFinish? finish,
   }) {
+    final resolvedFinish =
+        finish ?? (totalOnAccent ? TotalFinish.accentBar : TotalFinish.plain);
     final totals = data.totals;
     final document = data.document;
 
@@ -405,15 +672,53 @@ sealed class PdfKit {
         if (totals.hasShipping)
           _totalsRow('Shipping', data.money(totals.shipping), theme),
         pw.SizedBox(height: 6),
-        if (totalOnAccent)
-          _accentTotal(data, theme)
-        else
-          _totalsRow(
-            'Total',
-            data.money(totals.total),
-            theme,
-            isTotal: emphasiseTotal,
-          ),
+        switch (resolvedFinish) {
+          TotalFinish.plain => _totalsRow(
+              'Total',
+              data.money(totals.total),
+              theme,
+              isTotal: emphasiseTotal,
+            ),
+          TotalFinish.accentBar => _accentTotal(data, theme),
+          TotalFinish.soft => _accentTotal(
+              data,
+              theme,
+              fill: theme.accentSoft,
+              text: theme.accent,
+            ),
+          TotalFinish.outlined => pw.Container(
+              padding: const pw.EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 5,
+              ),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: theme.accent, width: 1.2),
+              ),
+              child: _totalsRow(
+                'Total',
+                data.money(totals.total),
+                theme,
+                isTotal: true,
+                color: theme.accent,
+              ),
+            ),
+          TotalFinish.doubleRule => pw.Column(
+              children: [
+                rule(theme, color: theme.ink),
+                pw.SizedBox(height: 4),
+                _totalsRow(
+                  'Total',
+                  data.money(totals.total),
+                  theme,
+                  isTotal: true,
+                ),
+                pw.SizedBox(height: 3),
+                rule(theme, color: theme.ink),
+                pw.SizedBox(height: 1.5),
+                rule(theme, color: theme.ink),
+              ],
+            ),
+        },
         if (document.isInvoice && totals.hasPayment) ...[
           pw.SizedBox(height: 4),
           _totalsRow('Paid', data.moneyNegated(totals.amountPaid), theme),
@@ -433,7 +738,11 @@ sealed class PdfKit {
     String value,
     PdfDocTheme theme, {
     bool isTotal = false,
+    PdfColor? color,
   }) {
+    final labelStyle = isTotal ? theme.grandTotalLabel : theme.totalsLabel;
+    final valueStyle = isTotal ? theme.grandTotalValue : theme.totalsValue;
+
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2.5),
       child: pw.Row(
@@ -443,23 +752,29 @@ sealed class PdfKit {
           pw.Expanded(
             child: pw.Text(
               label,
-              style: isTotal ? theme.grandTotalLabel : theme.totalsLabel,
+              style: labelStyle.copyWith(color: color),
             ),
           ),
           pw.SizedBox(width: 16),
           pw.Text(
             value,
-            style: isTotal ? theme.grandTotalValue : theme.totalsValue,
+            style: valueStyle.copyWith(color: color),
           ),
         ],
       ),
     );
   }
 
-  static pw.Widget _accentTotal(PdfRenderData data, PdfDocTheme theme) {
+  static pw.Widget _accentTotal(
+    PdfRenderData data,
+    PdfDocTheme theme, {
+    PdfColor? fill,
+    PdfColor? text,
+  }) {
+    final onFill = text ?? theme.onAccent;
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      color: theme.accent,
+      color: fill ?? theme.accent,
       child: pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         crossAxisAlignment: pw.CrossAxisAlignment.end,
@@ -467,13 +782,13 @@ sealed class PdfKit {
           pw.Expanded(
             child: pw.Text(
               'Total',
-              style: theme.grandTotalLabel.copyWith(color: theme.onAccent),
+              style: theme.grandTotalLabel.copyWith(color: onFill),
             ),
           ),
           pw.SizedBox(width: 16),
           pw.Text(
             data.money(data.totals.total),
-            style: theme.grandTotalValue.copyWith(color: theme.onAccent),
+            style: theme.grandTotalValue.copyWith(color: onFill),
           ),
         ],
       ),
@@ -628,15 +943,25 @@ sealed class PdfKit {
   }
 
   /// Standard A4 page settings for a template.
+  ///
+  /// [background] paints edge to edge behind the content of every page, for
+  /// the bands, frames and patterns that should run off the paper's edge.
   static pw.PageTheme pageTheme(
     PdfDocTheme theme, {
     pw.EdgeInsets margin = const pw.EdgeInsets.fromLTRB(36, 36, 36, 30),
+    pw.Widget Function(pw.Context context)? background,
   }) {
     return pw.PageTheme(
       pageFormat: PdfPageFormat.a4,
       orientation: pw.PageOrientation.portrait,
       margin: margin,
       theme: theme.pageTheme,
+      buildBackground: background == null
+          ? null
+          : (context) => pw.FullPage(
+                ignoreMargins: true,
+                child: background(context),
+              ),
     );
   }
 }

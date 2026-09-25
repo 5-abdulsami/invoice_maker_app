@@ -46,14 +46,21 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen>
   @override
   void initState() {
     super.initState();
-    // Renders the other templates in the background once this screen has
-    // settled, so "Change" opens the picker onto finished pages.
+    // Renders the templates beside this one in the background once the
+    // screen has settled, so "Change" opens the picker onto finished pages.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final document =
           context.read<DocumentController>().byId(widget.document.id) ??
               widget.document;
-      unawaited(DocumentPreview.precacheAll(context, document: document));
+      unawaited(
+        DocumentPreview.precacheAround(
+          context,
+          document: document,
+          around: document.template,
+          radius: 1,
+        ),
+      );
     });
   }
 

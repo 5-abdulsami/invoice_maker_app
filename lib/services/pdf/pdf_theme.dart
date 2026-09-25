@@ -38,7 +38,8 @@ class PdfDocTheme {
 
   /// The document heading, e.g. `INVOICE`.
   pw.TextStyle get displayTitle => pw.TextStyle(
-        font: fonts.narrowBold,
+        fontFallback: fonts.fallback,
+        font: fonts.display,
         fontSize: 30,
         color: ink,
         letterSpacing: 1.2,
@@ -49,12 +50,14 @@ class PdfDocTheme {
 
   /// Large figure, used by the statement and editorial layouts.
   pw.TextStyle get heroAmount => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowBold,
         fontSize: 26,
         color: ink,
       );
 
   pw.TextStyle get sectionLabel => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.bold,
         fontSize: 7.5,
         color: muted,
@@ -62,12 +65,14 @@ class PdfDocTheme {
       );
 
   pw.TextStyle get partyName => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.bold,
         fontSize: 11,
         color: ink,
       );
 
   pw.TextStyle get bodyText => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 9,
         color: body,
@@ -75,12 +80,14 @@ class PdfDocTheme {
       );
 
   pw.TextStyle get bodyStrong => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.medium,
         fontSize: 9,
         color: ink,
       );
 
   pw.TextStyle get caption => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 8,
         color: muted,
@@ -89,6 +96,7 @@ class PdfDocTheme {
 
   /// Table column heading.
   pw.TextStyle get tableHeader => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowBold,
         fontSize: 8,
         color: ink,
@@ -99,6 +107,7 @@ class PdfDocTheme {
 
   /// Item name in a table row.
   pw.TextStyle get tableCell => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 9,
         color: ink,
@@ -106,6 +115,7 @@ class PdfDocTheme {
 
   /// Row description, printed under the name.
   pw.TextStyle get tableCellMuted => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 8,
         color: muted,
@@ -114,42 +124,49 @@ class PdfDocTheme {
 
   /// A figure in a table row.
   pw.TextStyle get tableNumber => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowRegular,
         fontSize: 9.5,
         color: ink,
       );
 
   pw.TextStyle get tableNumberStrong => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowBold,
         fontSize: 9.5,
         color: ink,
       );
 
   pw.TextStyle get totalsLabel => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 9,
         color: body,
       );
 
   pw.TextStyle get totalsValue => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowRegular,
         fontSize: 9.5,
         color: ink,
       );
 
   pw.TextStyle get grandTotalLabel => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.bold,
         fontSize: 11,
         color: ink,
       );
 
   pw.TextStyle get grandTotalValue => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.narrowBold,
         fontSize: 15,
         color: ink,
       );
 
   pw.TextStyle get footerText => pw.TextStyle(
+        fontFallback: fonts.fallback,
         font: fonts.regular,
         fontSize: 7.5,
         color: muted,
@@ -160,7 +177,26 @@ class PdfDocTheme {
         base: fonts.regular,
         bold: fonts.bold,
         italic: fonts.italic,
+        fontFallback: fonts.fallback,
       ).copyWith(defaultTextStyle: bodyText);
+
+  /// A one-off style in this theme's fonts, for display type a template
+  /// sets itself. Carries the glyph fallback like every shared style.
+  pw.TextStyle styled({
+    required pw.Font font,
+    required double size,
+    PdfColor? color,
+    double? letterSpacing,
+    double? lineSpacing,
+  }) =>
+      pw.TextStyle(
+        fontFallback: fonts.fallback,
+        font: font,
+        fontSize: size,
+        color: color ?? ink,
+        letterSpacing: letterSpacing,
+        lineSpacing: lineSpacing,
+      );
 
   /// Accent ramps the templates pick from.
   ///
@@ -187,17 +223,45 @@ class PdfDocTheme {
   static const PdfColor white = PdfColors.white;
 
   /// Builds a theme for [accent] and its pale companion.
+  ///
+  /// The neutrals default to the shared warm-grey ramp; a template may tint
+  /// them towards its accent so the whole page reads as one palette.
   factory PdfDocTheme.accented({
     required PdfFonts fonts,
     required PdfColor accent,
     required PdfColor accentSoft,
     PdfColor onAccent = PdfColors.white,
+    PdfColor? ink,
+    PdfColor? body,
+    PdfColor? muted,
+    PdfColor? hairline,
+    PdfColor? surface,
   }) {
+    const base = _defaults;
     return PdfDocTheme(
       fonts: fonts,
       accent: accent,
       accentSoft: accentSoft,
       onAccent: onAccent,
+      ink: ink ?? base.ink,
+      body: body ?? base.body,
+      muted: muted ?? base.muted,
+      hairline: hairline ?? base.hairline,
+      surface: surface ?? base.surface,
     );
   }
+
+  static const ({
+    PdfColor ink,
+    PdfColor body,
+    PdfColor muted,
+    PdfColor hairline,
+    PdfColor surface,
+  }) _defaults = (
+    ink: PdfColor.fromInt(0xFF1A1A1A),
+    body: PdfColor.fromInt(0xFF3D3D3D),
+    muted: PdfColor.fromInt(0xFF757575),
+    hairline: PdfColor.fromInt(0xFFDCDCDC),
+    surface: PdfColor.fromInt(0xFFF7F7F5),
+  );
 }

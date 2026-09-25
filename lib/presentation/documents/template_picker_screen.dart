@@ -45,12 +45,27 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
   @override
   void initState() {
     super.initState();
-    // Usually already done by the detail screen; otherwise renders the rest
-    // in the background so swiping lands on a finished page.
+    _warmAround(_initialIndex);
+  }
+
+  /// Renders the pages either side of [index] in the background, so the
+  /// next swipe in either direction lands on a finished page.
+  ///
+  /// A newer swipe supersedes an older warm-up, so flicking through several
+  /// pages never queues renders for the ones already passed.
+  void _warmAround(int index) {
+    final generation = ++_warmGeneration;
     unawaited(
-      DocumentPreview.precacheAll(context, document: widget.document),
+      DocumentPreview.precacheAround(
+        context,
+        document: widget.document,
+        around: _templates[index],
+        keepGoing: () => generation == _warmGeneration,
+      ),
     );
   }
+
+  int _warmGeneration = 0;
 
   @override
   void dispose() {
@@ -81,7 +96,10 @@ class _TemplatePickerScreenState extends State<TemplatePickerScreen> {
             child: PageView.builder(
               controller: _controller,
               itemCount: _templates.length,
-              onPageChanged: (index) => setState(() => _index = index),
+              onPageChanged: (index) {
+                setState(() => _index = index);
+                _warmAround(index);
+              },
               itemBuilder: (context, index) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(

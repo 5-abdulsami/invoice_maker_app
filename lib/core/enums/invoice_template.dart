@@ -49,6 +49,116 @@ enum InvoiceTemplate {
     'Grid',
     'Every section boxed in its own outlined panel.',
     TemplateTier.pro,
+  ),
+  aurora(
+    'Aurora',
+    'Edge-to-edge gradient header in teal and indigo.',
+    TemplateTier.free,
+  ),
+  receipt(
+    'Receipt',
+    'A till-receipt strip in monospace with dashed tear lines.',
+    TemplateTier.free,
+  ),
+  angles(
+    'Angles',
+    'Bold coral and navy triangles framing the corners.',
+    TemplateTier.free,
+  ),
+  tide(
+    'Tide',
+    'Soft ocean waves rolling across the top and bottom.',
+    TemplateTier.free,
+  ),
+  sage(
+    'Sage',
+    'Warm cream paper, sage green and a classic serif.',
+    TemplateTier.free,
+  ),
+  cards(
+    'Cards',
+    'Friendly rounded cards for every section.',
+    TemplateTier.free,
+  ),
+  duo(
+    'Duo',
+    'A two-tone split header: title on one side, details on the other.',
+    TemplateTier.free,
+  ),
+  letterhead(
+    'Letterhead',
+    'Centred business letterhead with a contact strip at the foot.',
+    TemplateTier.free,
+  ),
+  monogram(
+    'Monogram',
+    'Initials seal, gold rules and a symmetrical serif layout.',
+    TemplateTier.pro,
+  ),
+  blueprint(
+    'Blueprint',
+    'Engineering graph paper with a technical title block.',
+    TemplateTier.pro,
+  ),
+  spine(
+    'Spine',
+    'A dark full-height spine with the title running up it.',
+    TemplateTier.pro,
+  ),
+  swiss(
+    'Swiss',
+    'Strict grid, oversized number and a single red square.',
+    TemplateTier.pro,
+  ),
+  luxe(
+    'Luxe',
+    'Black and gold with a fine double frame.',
+    TemplateTier.pro,
+  ),
+  poster(
+    'Poster',
+    'Huge condensed headline in black and signal yellow.',
+    TemplateTier.pro,
+  ),
+  ribbon(
+    'Ribbon',
+    'A corner ribbon and a bookmark tab carrying the amount.',
+    TemplateTier.pro,
+  ),
+  halftone(
+    'Halftone',
+    'A fading dot-screen pattern in warm orange.',
+    TemplateTier.pro,
+  ),
+  pinstripe(
+    'Pinstripe',
+    'Tailored diagonal pinstripes in charcoal and mint.',
+    TemplateTier.pro,
+  ),
+  sheet(
+    'Sheet',
+    'Spreadsheet-style numbered grid with a formula-bar total.',
+    TemplateTier.pro,
+  ),
+  midnight(
+    'Midnight',
+    'Deep midnight header with an electric cyan amount.',
+    TemplateTier.pro,
+  ),
+  frame(
+    'Frame',
+    'A terracotta border wrapping the whole page.',
+    TemplateTier.pro,
+  ),
+  orbit(
+    'Orbit',
+    'Overlapping circles in plum and rose.',
+    TemplateTier.pro,
+  ),
+  arrow(
+    'Arrow',
+    'Chevron tabs pointing the way from title to total.',
+    TemplateTier.pro,
   );
 
   const InvoiceTemplate(this.label, this.description, this.tier);
