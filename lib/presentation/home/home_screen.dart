@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
-import 'package:invoicemaker/core/design/palette.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
 import 'package:invoicemaker/core/enums/document_kind.dart';
 import 'package:invoicemaker/core/extensions/build_context_ext.dart';
-import 'package:invoicemaker/core/utils/money.dart';
 import 'package:invoicemaker/navigation/app_navigator.dart';
 import 'package:invoicemaker/presentation/common/layout/app_scaffold.dart';
 import 'package:invoicemaker/presentation/common/widgets/app_button.dart';
 import 'package:invoicemaker/presentation/common/widgets/app_card.dart';
 import 'package:invoicemaker/presentation/common/widgets/section_header.dart';
 import 'package:invoicemaker/presentation/documents/widgets/document_card.dart';
+import 'package:invoicemaker/presentation/home/widgets/summary_section.dart';
 import 'package:invoicemaker/state/business_controller.dart';
 import 'package:invoicemaker/state/document_controller.dart';
 import 'package:invoicemaker/state/settings_controller.dart';
@@ -33,8 +32,6 @@ class HomeScreen extends StatelessWidget {
     final business = context.watch<BusinessController>();
     final settings = context.watch<SettingsController>();
 
-    final summary = documents.summary;
-    final money = settings.moneyFormat;
     final recent = documents.recent();
 
     return AppScaffold(
@@ -82,7 +79,10 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           Gap.h20,
-          _SummaryRow(summary: summary, money: money),
+          SummarySection(
+            summaries: documents.summaries,
+            moneyFor: settings.moneyFormatFor,
+          ),
           if (recent.isNotEmpty) ...[
             Gap.h28,
             SectionHeader(
@@ -140,128 +140,6 @@ class _SetUpBusinessCard extends StatelessWidget {
           AppButton.secondary(
             label: AppCopy.setUpBusinessAction,
             onPressed: onSetUp,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Outstanding, overdue and collected, side by side.
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.summary, required this.money});
-
-  final DocumentSummary summary;
-  final MoneyFormat money;
-
-  @override
-  Widget build(BuildContext context) {
-    final tiles = [
-      _SummaryTile(
-        label: AppCopy.outstandingLabel,
-        value: money.format(summary.outstanding),
-        tone: AppStatusTone.neutral,
-      ),
-      _SummaryTile(
-        label: AppCopy.overdueLabel,
-        value: money.format(summary.overdue),
-        tone: AppStatusTone.critical,
-        badge: summary.overdueCount > 0 ? '${summary.overdueCount}' : null,
-      ),
-      _SummaryTile(
-        label: AppCopy.paidLabel,
-        value: money.format(summary.collected),
-        tone: AppStatusTone.positive,
-      ),
-    ];
-
-    // Stacks on the narrowest phones, where three figures side by side would
-    // each be squeezed to a few characters.
-    if (context.isCompactWidth) {
-      return Column(
-        children: [
-          for (var i = 0; i < tiles.length; i++) ...[
-            if (i > 0) Gap.h8,
-            tiles[i],
-          ],
-        ],
-      );
-    }
-
-    // IntrinsicHeight bounds the row's height, which is what lets the tiles
-    // stretch to match each other inside the page's scroll view.
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var i = 0; i < tiles.length; i++) ...[
-            if (i > 0) Gap.w8,
-            Expanded(child: tiles[i]),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryTile extends StatelessWidget {
-  const _SummaryTile({
-    required this.label,
-    required this.value,
-    required this.tone,
-    this.badge,
-  });
-
-  final String label;
-  final String value;
-  final AppStatusTone tone;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.palette.statusColors(tone);
-
-    return AppCard(
-      padding: const EdgeInsets.all(Insets.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: context.text.labelMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (badge != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Insets.xs,
-                    vertical: Insets.xxs,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colors.background,
-                    borderRadius: Radii.pillAll,
-                  ),
-                  child: Text(
-                    badge!,
-                    style: context.text.labelSmall?.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          Gap.h8,
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(value, style: context.textRoles.amountLarge),
           ),
         ],
       ),

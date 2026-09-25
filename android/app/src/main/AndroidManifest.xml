@@ -9,6 +9,7 @@
         android:label="Invoice Maker"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
@@ -47,6 +48,17 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <!-- The About screen opens web links (privacy policy, Play listing)
+             and the email app for feedback. Android 11+ hides other apps
+             unless the intents are declared here. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
         </intent>
     </queries>
 </manifest>

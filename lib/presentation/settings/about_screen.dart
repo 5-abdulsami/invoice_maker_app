@@ -25,9 +25,7 @@ class AboutScreen extends StatelessWidget {
     }
 
     final uri = Uri.tryParse(url);
-    final opened = uri != null &&
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-
+    final opened = uri != null && await _launch(uri);
     if (!opened && context.mounted) {
       context.showErrorMessage('Could not open $label.');
     }
@@ -39,17 +37,26 @@ class AboutScreen extends StatelessWidget {
       return;
     }
 
-    final uri = Uri(
-      scheme: 'mailto',
-      path: AppInfo.supportEmail,
-      queryParameters: {
-        'subject': '${AppStrings.appName} ${AppInfo.versionName} feedback',
-      },
+    // Built by hand: Uri's query encoder writes spaces as "+", which many
+    // mail apps show literally in the subject line.
+    final subject = Uri.encodeComponent(
+      '${AppStrings.appName} ${AppInfo.versionName} feedback',
     );
+    final uri = Uri.parse('mailto:${AppInfo.supportEmail}?subject=$subject');
 
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final opened = await _launch(uri);
     if (!opened && context.mounted) {
       context.showErrorMessage('Could not open your email app.');
+    }
+  }
+
+  /// Opens [uri] in another app. False rather than a crash when no app on
+  /// the phone can handle it.
+  static Future<bool> _launch(Uri uri) async {
+    try {
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } on Object {
+      return false;
     }
   }
 

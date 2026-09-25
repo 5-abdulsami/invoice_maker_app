@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:invoicemaker/core/design/palette.dart';
 import 'package:invoicemaker/core/enums/document_kind.dart';
+import 'package:invoicemaker/core/extensions/date_ext.dart';
 
 /// The state stored on a document.
 ///
@@ -57,6 +58,24 @@ class DocumentStatusPresentation {
 
   final String label;
   final AppStatusTone tone;
+
+  /// The line describing a document's end date, in the words that fit its
+  /// kind: an invoice falls due (`Due in 7 days`, `3 days overdue`), an
+  /// estimate stays valid (`Valid for 7 days`, `Expired yesterday`).
+  ///
+  /// A closed document no longer counts down, so it says what happens next
+  /// instead of repeating its status badge.
+  static String endDateLabel(DocumentStatus status, DateTime endDate) {
+    return switch (status) {
+      DocumentStatus.paid => 'Settled',
+      DocumentStatus.unpaid ||
+      DocumentStatus.partiallyPaid =>
+        DueDateLabel.describe(endDate, isSettled: false),
+      DocumentStatus.pending => DueDateLabel.describeValidity(endDate),
+      DocumentStatus.approved => 'Ready to invoice',
+      DocumentStatus.declined => 'Closed',
+    };
+  }
 
   /// Builds the badge for a document.
   ///

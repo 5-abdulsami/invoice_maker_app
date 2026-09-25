@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adaptive icon's background: the brand teal gradient from the icon
+     artwork, drawn as a shape so it stays sharp at any launcher size. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="315"
+        android:startColor="#3AA4AA"
+        android:centerColor="#1F7F85"
+        android:endColor="#0A4F55"
+        android:type="linear" />
+</shape>

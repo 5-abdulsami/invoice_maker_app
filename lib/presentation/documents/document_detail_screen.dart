@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
+import 'package:invoicemaker/core/enums/document_status.dart';
 import 'package:invoicemaker/core/enums/pdf_action.dart';
 import 'package:invoicemaker/core/extensions/build_context_ext.dart';
-import 'package:invoicemaker/core/extensions/date_ext.dart';
 import 'package:invoicemaker/core/utils/money.dart';
 import 'package:invoicemaker/data/models/sales_document.dart';
 import 'package:invoicemaker/navigation/app_navigator.dart';
@@ -208,9 +208,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen>
                   balance: totals.hasPayment
                       ? money.format(totals.balanceDue)
                       : null,
-                  dueLabel: DueDateLabel.describe(
+                  dueLabel: DocumentStatusPresentation.endDateLabel(
+                    document.status,
                     document.endDate,
-                    isSettled: document.status.isSettled,
                   ),
                   onStatusTap: () => _changeStatus(document),
                 ),

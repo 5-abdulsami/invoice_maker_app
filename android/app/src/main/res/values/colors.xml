@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand teal behind the launch logo. Keep in step with
+         BrandColors.splashBackground in lib/core/design/brand_colors.dart, so
+         the native launch screen hands over to the Flutter splash seamlessly. -->
+    <color name="splash_background">#0B4E53</color>
+</resources>

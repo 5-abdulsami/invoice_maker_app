@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:invoicemaker/core/enums/currency.dart';
 import 'package:invoicemaker/core/enums/document_kind.dart';
 import 'package:invoicemaker/core/enums/document_status.dart';
 import 'package:invoicemaker/core/enums/invoice_template.dart';
@@ -9,29 +10,29 @@ import 'package:invoicemaker/domain/numbering.dart';
 import 'package:invoicemaker/state/optimistic_notifier.dart';
 import 'package:invoicemaker/state/settings_controller.dart';
 
-/// Totals shown on the home screen.
+/// Money totals for the invoices billed in one currency, for the home
+/// screen.
 @immutable
 class DocumentSummary {
   const DocumentSummary({
+    required this.currency,
     required this.invoiceCount,
-    required this.estimateCount,
     required this.outstanding,
     required this.overdue,
     required this.collected,
     required this.overdueCount,
   });
 
-  static const DocumentSummary empty = DocumentSummary(
-    invoiceCount: 0,
-    estimateCount: 0,
-    outstanding: 0,
-    overdue: 0,
-    collected: 0,
-    overdueCount: 0,
-  );
+  /// No invoices yet in [currency].
+  const DocumentSummary.empty(this.currency)
+      : invoiceCount = 0,
+        outstanding = 0,
+        overdue = 0,
+        collected = 0,
+        overdueCount = 0;
 
+  final Currency currency;
   final int invoiceCount;
-  final int estimateCount;
 
   /// Money still owed across unsettled invoices.
   final double outstanding;
@@ -43,8 +44,27 @@ class DocumentSummary {
   final double collected;
 
   final int overdueCount;
+}
 
-  bool get hasInvoices => invoiceCount > 0;
+/// Accumulates one currency's totals while the documents are walked.
+class _SummaryTally {
+  _SummaryTally(this.currency);
+
+  final Currency currency;
+  int invoiceCount = 0;
+  double outstanding = 0;
+  double overdue = 0;
+  double collected = 0;
+  int overdueCount = 0;
+
+  DocumentSummary build() => DocumentSummary(
+        currency: currency,
+        invoiceCount: invoiceCount,
+        outstanding: outstanding,
+        overdue: overdue,
+        collected: collected,
+        overdueCount: overdueCount,
+      );
 }
 
 /// Owns the stored documents: reading, saving, numbering and status changes.
@@ -75,42 +95,49 @@ class DocumentController extends ChangeNotifier with OptimisticNotifier {
     return documents.take(limit).toList(growable: false);
   }
 
-  /// Money totals across every invoice.
-  DocumentSummary get summary {
-    var outstanding = 0.0;
-    var overdue = 0.0;
-    var collected = 0.0;
-    var invoiceCount = 0;
-    var estimateCount = 0;
-    var overdueCount = 0;
+  /// Money totals across every invoice, one summary per currency.
+  ///
+  /// Amounts billed in different currencies are never added together: a
+  /// rupee and a dollar do not make two of anything. The default currency
+  /// always comes first, even before its first invoice, so the home screen
+  /// has figures from day one; the others follow by how often they are used.
+  List<DocumentSummary> get summaries {
+    final defaultCurrency = _settings.settings.defaultCurrency;
+    final tallies = <Currency, _SummaryTally>{
+      defaultCurrency: _SummaryTally(defaultCurrency),
+    };
 
     for (final document in _documents.all) {
-      if (!document.isInvoice) {
-        estimateCount++;
-        continue;
-      }
+      if (!document.isInvoice) continue;
 
-      invoiceCount++;
+      final tally = tallies.putIfAbsent(
+        document.currency,
+        () => _SummaryTally(document.currency),
+      );
       final totals = document.totals;
-      collected += totals.amountPaid;
+      tally
+        ..invoiceCount += 1
+        ..collected += totals.amountPaid;
 
       if (document.status == DocumentStatus.paid) continue;
 
-      outstanding += totals.balanceDue;
+      tally.outstanding += totals.balanceDue;
       if (document.isPastEndDate) {
-        overdue += totals.balanceDue;
-        overdueCount++;
+        tally
+          ..overdue += totals.balanceDue
+          ..overdueCount += 1;
       }
     }
 
-    return DocumentSummary(
-      invoiceCount: invoiceCount,
-      estimateCount: estimateCount,
-      outstanding: outstanding,
-      overdue: overdue,
-      collected: collected,
-      overdueCount: overdueCount,
-    );
+    final others = tallies.values
+        .where((tally) => tally.currency != defaultCurrency)
+        .toList()
+      ..sort((a, b) => b.invoiceCount.compareTo(a.invoiceCount));
+
+    return [
+      tallies[defaultCurrency]!.build(),
+      for (final tally in others) tally.build(),
+    ];
   }
 
   /// A new unsaved document, seeded from the settings and business profile.

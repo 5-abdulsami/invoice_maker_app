@@ -120,6 +120,12 @@ sealed class AppStrings {
 
 /// Longer sentences: explanations, empty states and messages.
 sealed class AppCopy {
+  /// A count with its noun, e.g. `1 invoice`, `3 invoices`.
+  ///
+  /// Every noun the app counts takes a plain `s` plural.
+  static String count(int value, String noun) =>
+      '$value ${value == 1 ? noun : '${noun}s'}';
+
   // Home.
   static const String homeGreeting = 'Your workspace';
   static const String homePrimaryAction = 'Create an invoice';

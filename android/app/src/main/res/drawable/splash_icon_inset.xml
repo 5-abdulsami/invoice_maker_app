@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Android 12+ splash icon: the 144dp logo centred on the 288dp canvas
+     the system expects, so the whole rounded square sits inside the circular
+     mask instead of having its corners clipped. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/splash_logo"
+    android:inset="72dp" />

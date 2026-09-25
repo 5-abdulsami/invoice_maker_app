@@ -29,7 +29,17 @@ class AppRepositories {
   /// unavailable, which beats failing to launch.
   static Future<AppRepositories> initialize() async {
     final (LocalStore store, FileVault? vault) = await _openStorage();
+    return _assemble(store, vault);
+  }
 
+  /// Repositories held in memory only, for tests and previews.
+  static Future<AppRepositories> inMemory() =>
+      _assemble(MemoryLocalStore(), null);
+
+  static Future<AppRepositories> _assemble(
+    LocalStore store,
+    FileVault? vault,
+  ) async {
     final repositories = AppRepositories(
       store: store,
       vault: vault,

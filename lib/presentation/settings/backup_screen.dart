@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
+import 'package:invoicemaker/core/enums/document_kind.dart';
 import 'package:invoicemaker/core/extensions/build_context_ext.dart';
 import 'package:invoicemaker/data/models/backup_bundle.dart';
 import 'package:invoicemaker/presentation/common/async_action.dart';
@@ -70,10 +71,10 @@ class _BackupScreenState extends State<BackupScreen> with AsyncAction {
     return AppSheet.actions<RestoreMode>(
       context,
       title: AppCopy.importMergeTitle,
-      subtitle: '${bundle.invoiceCount} invoices, '
-          '${bundle.estimateCount} estimates and '
-          '${bundle.customers.length} customers in this file. '
-          '${AppCopy.importMergeBody}',
+      subtitle: '${AppCopy.count(bundle.invoiceCount, 'invoice')}, '
+          '${AppCopy.count(bundle.estimateCount, 'estimate')} and '
+          '${AppCopy.count(bundle.customers.length, 'customer')} in this '
+          'file. ${AppCopy.importMergeBody}',
       actions: const [
         SheetAction(
           value: RestoreMode.merge,
@@ -127,7 +128,6 @@ class _BackupScreenState extends State<BackupScreen> with AsyncAction {
     final documents = context.watch<DocumentController>();
     final customers = context.watch<CustomerController>();
     final catalog = context.watch<CatalogController>();
-    final summary = documents.summary;
 
     return AppScaffold(
       title: AppStrings.dataAndBackup,
@@ -163,10 +163,18 @@ class _BackupScreenState extends State<BackupScreen> with AsyncAction {
                   ),
                   Gap.h8,
                   Text(
-                    '${summary.invoiceCount} invoices · '
-                    '${summary.estimateCount} estimates · '
-                    '${customers.count} customers · '
-                    '${catalog.count} items',
+                    [
+                      AppCopy.count(
+                        documents.countOfKind(DocumentKind.invoice),
+                        'invoice',
+                      ),
+                      AppCopy.count(
+                        documents.countOfKind(DocumentKind.estimate),
+                        'estimate',
+                      ),
+                      AppCopy.count(customers.count, 'customer'),
+                      AppCopy.count(catalog.count, 'item'),
+                    ].join(' · '),
                     style: context.text.bodyMedium,
                   ),
                   Gap.h12,

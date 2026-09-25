@@ -22,7 +22,7 @@ class DocumentDefaultsScreen extends StatelessWidget {
   static const List<int> _termOptions = [0, 7, 14, 21, 30, 45, 60, 90];
 
   static String _termLabel(int days) =>
-      days == 0 ? 'Due on receipt' : '$days days';
+      days == 0 ? 'Due on receipt' : AppCopy.count(days, 'day');
 
   Future<void> _pickCurrency(BuildContext context) async {
     final controller = context.read<SettingsController>();

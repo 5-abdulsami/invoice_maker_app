@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
 import 'package:invoicemaker/core/design/tokens.dart';
+import 'package:invoicemaker/core/enums/document_status.dart';
 import 'package:invoicemaker/core/enums/formats.dart';
 import 'package:invoicemaker/core/extensions/date_ext.dart';
 import 'package:invoicemaker/presentation/common/widgets/app_card.dart';
@@ -67,9 +68,9 @@ class EditorHeaderCard extends StatelessWidget {
           ),
           Gap.h8,
           Text(
-            DueDateLabel.describe(
+            DocumentStatusPresentation.endDateLabel(
+              document.status,
               document.endDate,
-              isSettled: document.status.isSettled,
             ),
             style: Theme.of(context).textTheme.bodySmall,
           ),

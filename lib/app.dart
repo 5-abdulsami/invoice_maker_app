@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:invoicemaker/core/constants/app_strings.dart';
 import 'package:invoicemaker/core/design/app_scroll_behavior.dart';
 import 'package:invoicemaker/core/design/app_theme.dart';
@@ -89,12 +90,28 @@ class InvoiceMakerApp extends StatelessWidget {
 
               return MediaQuery(
                 data: MediaQuery.of(context).copyWith(textScaler: scaler),
-                child: child ?? const SizedBox.shrink(),
+                // Status and navigation bar icons contrast with the theme
+                // canvas; app bars refine the status bar on their own.
+                child: AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: _systemBarsFor(Theme.of(context).brightness),
+                  child: child ?? const SizedBox.shrink(),
+                ),
               );
             },
           );
         },
       ),
+    );
+  }
+
+  static SystemUiOverlayStyle _systemBarsFor(Brightness brightness) {
+    final base = brightness == Brightness.dark
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark;
+    return base.copyWith(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarContrastEnforced: false,
     );
   }
 }

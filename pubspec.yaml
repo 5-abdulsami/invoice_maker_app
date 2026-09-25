@@ -46,9 +46,13 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # Typefaces used only inside the PDF templates, read on demand by the
-  # templates that need them. Licences are in assets/fonts/licenses.
+  # The splash logo, and the typefaces used only inside the PDF templates,
+  # read on demand by the templates that need them. Font licences are in
+  # assets/fonts/licenses.
   assets:
+    # Splash logo, pre-sized from the 1024px source art so the app does not
+    # ship or decode a larger image than the splash draws.
+    - assets/images/app_logo.png
     - assets/fonts/serif-regular.ttf
     - assets/fonts/serif-bold.ttf
     - assets/fonts/serif-italic.ttf

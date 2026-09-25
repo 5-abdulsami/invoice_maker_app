@@ -12,8 +12,14 @@ sealed class AppInfo {
   /// Hosted privacy policy. The app also shows an offline summary.
   static const String privacyPolicyUrl = '';
 
-  /// Play Store listing, used by "Rate this app".
-  static const String storeListingUrl = '';
+  /// Android application id; must match `applicationId` in
+  /// android/app/build.gradle.
+  static const String applicationId = 'com.tenbucks.invoicemaker';
+
+  /// Play Store listing, used by "Rate this app". Fixed by the application
+  /// id, so it is correct from the first published release.
+  static const String storeListingUrl =
+      'https://play.google.com/store/apps/details?id=$applicationId';
 
   /// File name stem for exported backups.
   static const String backupFileStem = 'invoice-maker-backup';
